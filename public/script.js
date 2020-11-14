@@ -10,7 +10,8 @@ var myAudio = null
 localVideo.firstElementChild.muted = true
 var calls = []
 var videos = {}
-let myGroup = 2;
+let myGroup = 2
+let muted = false
 
 /**
  * Stores all the information about a peer, including access to the call object
@@ -59,6 +60,7 @@ navigator.mediaDevices.getUserMedia({
       conn.send({group: myGroup});
       console.log("Sent back data in return");
       peerGroup = data.group;
+      video.firstElementChild.muted = data.muted
 
       myPeer.on('call', call => {
         newPeer.call = call;
@@ -119,7 +121,7 @@ function connectToNewUser(userId, stream) {
 
   conn.on("open", () => {
     console.log("Sending group to peer")
-    conn.send({group: myGroup});
+    conn.send({group: myGroup, muted: muted});
 
     conn.on('data', data => {
       console.log("Received group from peer");
@@ -228,12 +230,14 @@ function makeVideoElement(userId) {
     mute.className = "mute-button"
 
     mute.onclick = () => {
-      if (mute.textContent === "Mute") {
+      if (!muted) {
         socket.emit('mute', ROOM_ID, myid)
         mute.textContent = "Unmute"
+        muted = true
       } else {
         socket.emit('unmute', ROOM_ID, myid)
         mute.textContent = "Mute"
+        muted = false
       }
     }
     elem.append(mute)
