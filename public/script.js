@@ -55,7 +55,6 @@ function addVideoStream(video, stream) {
   video.srcObject = stream
   video.addEventListener('loadedmetadata', () => {
     video.play()
-<<<<<<< HEAD
     var playing = true
 
     video.onclick = () => {
