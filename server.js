@@ -27,6 +27,12 @@ io.on('connection', socket => {
     socket.on('join-group', msg => {
       socket.to(roomId).broadcast.emit('join-group', msg);
     });
+
+    socket.on('move', msg => {
+      console.log(`User with id ${msg.userId} requesting move to ${msg.group}`);
+
+      socket.to(roomId).broadcast.emit('move', msg);
+    })
   });
 });
 

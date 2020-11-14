@@ -6,7 +6,7 @@ const myPeer = new Peer(undefined, {
 const myVideo = document.createElement('video')
 myVideo.muted = true;
 
-const myGroup = 2;
+let myGroup = 2;
 
 /**
  * Stores all the information about a peer, including access to the call object
@@ -33,14 +33,18 @@ navigator.mediaDevices.getUserMedia({
   moveVideoStream(myVideo, myGroup);
 
   let peerGroup;
+  let peerUserId;
 
   myPeer.on('connection', conn => {
     console.log("Peer establishing connection")
-    const newPeer = new PeerInfo();
+    let newPeer = new PeerInfo();
     const video = document.createElement('video');
 
     newPeer.conn = conn;
     newPeer.videoObj = video;
+    peerUserId = conn.peer;
+
+    peers[peerUserId] = newPeer;
 
     conn.on('data', data => {
       console.log("Recieved data from peer")
@@ -66,21 +70,28 @@ navigator.mediaDevices.getUserMedia({
 })
 
 socket.on('user-disconnected', userId => {
-  if (peers[userId]) peers[userId].call.close()
+  //if (peers[userId]) peers[userId].call.close()
 })
+
+socket.on('move', msg => {
+  moveVideoStream(peers[msg.userId].videoObj, msg.group);
+
+  //document.getElementById(`room-${msg.group}-videos`).append(peers[msg.userId].videoObj);
+});
 
 myPeer.on('open', id => {
   socket.emit('join-room', ROOM_ID, id)
 })
 
 function connectToNewUser(userId, stream) {
-  const newPeer = new PeerInfo();
+  let newPeer = new PeerInfo();
   const video = document.createElement('video');
   const conn = myPeer.connect(userId);
 
   newPeer.conn = conn;
   newPeer.videoObj = video;
 
+  console.log(newPeer);
   let peerGroup;
 
   conn.on("open", () => {
@@ -103,7 +114,7 @@ function connectToNewUser(userId, stream) {
         video.remove()
       })
     
-      peers[userId] = PeerInfo;
+      peers[userId] = newPeer;
     });
   });
 
@@ -127,13 +138,22 @@ function injectVideoStream(video, stream) {
 }
 
 document.getElementById('move-1').addEventListener('click', e => {
-  document.getElementById('room-1-videos').append(myVideo);
+  moveVideoStream(myVideo, 1);
+  myGroup = 1;
+
+  socket.emit('move', {userId: myPeer.id, group: myGroup});
 });
 
 document.getElementById('move-2').addEventListener('click', e => {
-  document.getElementById('room-2-videos').append(myVideo);
+  moveVideoStream(myVideo, 2);
+  myGroup = 2;
+
+  socket.emit('move', {userId: myPeer.id, group: myGroup});
 });
 
 document.getElementById('move-3').addEventListener('click', e => {
-  document.getElementById('room-3-videos').append(myVideo);
+  moveVideoStream(myVideo, 3);
+  myGroup = 3;
+
+  socket.emit('move', {userId: myPeer.id, group: myGroup});
 });
