@@ -22,8 +22,12 @@ io.on('connection', socket => {
 
     socket.on('disconnect', () => {
       socket.to(roomId).broadcast.emit('user-disconnected', userId)
-    })
-  })
-})
+    });
+
+    socket.on('join-group', msg => {
+      socket.to(roomId).broadcast.emit('join-group', msg);
+    });
+  });
+});
 
 server.listen(3000)

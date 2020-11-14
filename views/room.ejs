@@ -12,7 +12,7 @@
   <script src="script.js" defer></script>
   <title>Document</title>
   <style>
-    #video-grid {
+    .video-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, 300px);
       grid-auto-rows: 300px;
@@ -26,6 +26,16 @@
   </style>
 </head>
 <body>
-  <div id="video-grid"></div>
+  <div id="room-1-wrapper" class="video-grid">
+    <h1>Room 1</h1>
+    <div id="room-1-videos"></div>
+  </div>
+  <div id="room-2-wrapper" class="video-grid">
+    <h1>Room 2</h1>
+    <div id="room-2-videos"></div>
+  </div><div id="room-2-wrapper" class="video-grid">
+    <h1>Room 3</h1>
+    <div id="room-3-videos"></div>
+  </div>
 </body>
 </html>
