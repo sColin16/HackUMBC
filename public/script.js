@@ -74,13 +74,11 @@ navigator.mediaDevices.getUserMedia({
 setupDeviceSwitching()
 
 socket.on('user-disconnected', userId => {
-  //if (peers[userId]) peers[userId].call.close()
+  if (peers[userId]) peers[userId].call.close()
 })
 
 socket.on('move', msg => {
   moveVideoStream(peers[msg.userId].videoObj, msg.group);
-
-  //document.getElementById(`room-${msg.group}-videos`).append(peers[msg.userId].videoObj);
 });
 
 myPeer.on('open', id => {
