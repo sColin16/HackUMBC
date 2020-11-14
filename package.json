@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "devStart": "nodemon server.js"
+    "devStart": "peerjs -p 3001 & nodemon server.js"
   },
   "keywords": [],
   "author": "",
