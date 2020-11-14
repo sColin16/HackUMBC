@@ -41,10 +41,10 @@
     .video-container {
       position: relative;
     }
-    
+
     video {
-      width: 100%;
-      height: 100%;
+      width: 300px;
+      height:100%;
       object-fit: cover;
     }
   </style>
@@ -57,5 +57,24 @@
     </select>
   </div>
   <div id="video-grid"></div>
+  <div id="room-1-wrapper" class="video-grid">
+    <div>
+      <h1>Room 1</h1>
+      <button id='move-1'>Join Room 1</button></div>
+    <div id="room-1-videos"></div>
+  </div>
+  <div id="room-2-wrapper" class="video-grid">
+    <div>
+      <h1>Room 2</h1>
+      <button id='move-2'>Join Room 2</button>
+    </div>
+    <div id="room-2-videos"></div>
+  </div><div id="room-3-wrapper" class="video-grid">
+    <div>
+      <h1>Room 3</h1>
+      <button id='move-3'>Join Room 3</button>
+    </div>
+    <div id="room-3-videos"></div>
+  </div>
 </body>
 </html>

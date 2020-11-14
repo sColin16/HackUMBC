@@ -1,5 +1,4 @@
 const socket = io('/')
-const videoGrid = document.getElementById('video-grid')
 const myPeer = new Peer(undefined, {
   host: '/',
   port: '3001'
@@ -9,30 +8,79 @@ const localVideo = makeVideoElement(false)
 var myVideo = null
 var myAudio = null
 localVideo.firstElementChild.muted = true
-const peers = {}
 var calls = []
 var videos = {}
+let myGroup = 2;
+
+/**
+ * Stores all the information about a peer, including access to the call object
+ */
+class PeerInfo {
+  constructor(videoObj, call, conn) {
+    this.videoObj = videoObj;
+    this.call = call;
+    this.conn = conn;
+  }
+}
+
+const peers = {} // Dictionary of (userID, PeerInfo) pairs
+
+const peerVideos = {}; // Stores video DOM objects, hashed by userID
 
 navigator.mediaDevices.getUserMedia({
   video: true,
   audio: true
 }).then(stream => {
-  addVideoStream(localVideo, stream)
   myAudio = stream.getAudioTracks()[0]
   myVideo = stream.getVideoTracks()[0]
 
-  myPeer.on('call', call => {
-    calls.push(call)
-    call.answer(stream)
-    const video = makeVideoElement(call.peer)
-    call.on('stream', userVideoStream => {
-      addVideoStream(video, userVideoStream)
-    })
-  })
+  // Add own video stream to video object
+  injectVideoStream(localVideo, stream);
+
+  // Move video stream to the default room
+  moveVideoStream(localVideo, myGroup);
+
+  let peerGroup;
+  let peerUserId;
+
+  myPeer.on('connection', conn => {
+    console.log("Peer establishing connection")
+    let newPeer = new PeerInfo();
+    const video = makeVideoElement(conn.peer)
+
+    newPeer.conn = conn;
+    newPeer.videoObj = video;
+    peerUserId = conn.peer;
+
+    peers[peerUserId] = newPeer;
+
+    conn.on('data', data => {
+      console.log("Recieved data from peer")
+      conn.send({group: myGroup});
+      console.log("Sent back data in return");
+      peerGroup = data.group;
+
+      myPeer.on('call', call => {
+        newPeer.call = call;
+
+        calls.push(call)
+        call.answer(stream);
+    
+        call.on('stream', userVideoStream => {
+          injectVideoStream(video, userVideoStream);
+          moveVideoStream(video, peerGroup);
+        });
+
+        call.on('close', () => {
+          video.remove()
+        })
+      })
+    });
+  });
 
   socket.on('user-connected', userId => {
     connectToNewUser(userId, stream)
-  })
+  });
 })
 
 setupDeviceSwitching()
@@ -46,8 +94,12 @@ socket.on('user-unmuted', userId => {
 })
 
 socket.on('user-disconnected', userId => {
-  if (peers[userId]) peers[userId].close()
+  if (peers[userId]) peers[userId].call.close()
 })
+
+socket.on('move', msg => {
+  moveVideoStream(peers[msg.userId].videoObj, msg.group);
+});
 
 myPeer.on('open', id => {
   myid = id
@@ -55,22 +107,52 @@ myPeer.on('open', id => {
 })
 
 function connectToNewUser(userId, stream) {
-  const call = myPeer.call(userId, stream)
-  calls.push(call)
-  call.peerConnection.getSenders()[0].replaceTrack(myAudio)
-  call.peerConnection.getSenders()[0].replaceTrack(myVideo)
+  let newPeer = new PeerInfo();
   const video = makeVideoElement(userId)
-  call.on('stream', userVideoStream => {
-    addVideoStream(video, userVideoStream)
-  })
-  call.on('close', () => {
-    video.remove()
-  })
+  const conn = myPeer.connect(userId);
 
-  peers[userId] = call
+  newPeer.conn = conn;
+  newPeer.videoObj = video;
+
+  console.log(newPeer);
+  let peerGroup;
+
+  conn.on("open", () => {
+    console.log("Sending group to peer")
+    conn.send({group: myGroup});
+
+    conn.on('data', data => {
+      console.log("Received group from peer");
+      peerGroup = data.group;
+
+      const call = myPeer.call(userId, stream);
+      newPeer.call = call;
+      calls.push(call)
+      call.peerConnection.getSenders()[0].replaceTrack(myAudio)
+      call.peerConnection.getSenders()[0].replaceTrack(myVideo)
+      
+      // Add the stream object to the video DOM object once sent
+      call.on('stream', userVideoStream => {
+        injectVideoStream(video, userVideoStream);
+        moveVideoStream(video, peerGroup);
+      })
+      call.on('close', () => {
+        video.remove()
+      })
+    
+      peers[userId] = newPeer;
+    });
+  });
 }
 
-function addVideoStream(elem, stream) {
+function moveVideoStream(video, group) {
+  document.getElementById(`room-${group}-videos`).appendChild(video);
+}
+
+/**
+ * Adds a stream to a video DOM object, and returns that object
+ */
+function injectVideoStream(elem, stream) {
   video = elem.firstElementChild
   video.srcObject = stream
   video.addEventListener('loadedmetadata', () => {
@@ -87,7 +169,7 @@ function addVideoStream(elem, stream) {
       }
     }
   })
-  videoGrid.append(elem)
+  return elem;
 }
 
 function setupDeviceSwitching() {
@@ -176,3 +258,24 @@ function makeVideoElement(userId) {
 
   return elem
 }
+
+document.getElementById('move-1').addEventListener('click', e => {
+  moveVideoStream(localVideo, 1);
+  myGroup = 1;
+
+  socket.emit('move', {userId: myPeer.id, group: myGroup});
+});
+
+document.getElementById('move-2').addEventListener('click', e => {
+  moveVideoStream(localVideo, 2);
+  myGroup = 2;
+
+  socket.emit('move', {userId: myPeer.id, group: myGroup});
+});
+
+document.getElementById('move-3').addEventListener('click', e => {
+  moveVideoStream(localVideo, 3);
+  myGroup = 3;
+
+  socket.emit('move', {userId: myPeer.id, group: myGroup});
+});
