@@ -125,3 +125,15 @@ function injectVideoStream(video, stream) {
   
   return video;
 }
+
+document.getElementById('move-1').addEventListener('click', e => {
+  document.getElementById('room-1-videos').appendChild(myVideo);
+});
+
+document.getElementById('move-2').addEventListener('click', e => {
+  document.getElementById('room-2-videos').appendChild(myVideo);
+});
+
+document.getElementById('move-3').addEventListener('click', e => {
+  document.getElementById('room-3-videos').appendChild(myVideo);
+});
