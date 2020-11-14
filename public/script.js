@@ -55,6 +55,8 @@ navigator.mediaDevices.getUserMedia({
       peerGroup = data.group;
 
       myPeer.on('call', call => {
+        newPeer.call = call;
+
         calls.push(call)
         call.answer(stream);
     
@@ -62,6 +64,10 @@ navigator.mediaDevices.getUserMedia({
           injectVideoStream(video, userVideoStream);
           moveVideoStream(video, peerGroup);
         });
+
+        call.on('close', () => {
+          video.remove()
+        })
       })
     });
   });
