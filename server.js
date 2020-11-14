@@ -16,6 +16,13 @@ app.get('/:room', (req, res) => {
 })
 
 io.on('connection', socket => {
+  socket.on('mute', (roomId, userId) => {
+    console.log("MUTE")
+    socket.to(roomId).broadcast.emit('user-muted', userId)
+  })
+  socket.on('unmute', (roomId, userId) => {
+    socket.to(roomId).broadcast.emit('user-unmuted', userId)
+  })
   socket.on('join-room', (roomId, userId) => {
     socket.join(roomId)
     socket.to(roomId).broadcast.emit('user-connected', userId)

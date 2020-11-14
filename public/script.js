@@ -4,20 +4,27 @@ const myPeer = new Peer(undefined, {
   host: '/',
   port: '3001'
 })
-const myVideo = document.createElement('video')
-myVideo.muted = true
+myid = null
+const localVideo = makeVideoElement(false)
+var myVideo = null
+var myAudio = null
+localVideo.firstElementChild.muted = true
 const peers = {}
 var calls = []
+var videos = {}
+
 navigator.mediaDevices.getUserMedia({
   video: true,
   audio: true
 }).then(stream => {
-  addVideoStream(myVideo, stream)
+  addVideoStream(localVideo, stream)
+  myAudio = stream.getAudioTracks()[0]
+  myVideo = stream.getVideoTracks()[0]
 
   myPeer.on('call', call => {
     calls.push(call)
     call.answer(stream)
-    const video = document.createElement('video')
+    const video = makeVideoElement(call.peer)
     call.on('stream', userVideoStream => {
       addVideoStream(video, userVideoStream)
     })
@@ -30,17 +37,29 @@ navigator.mediaDevices.getUserMedia({
 
 setupDeviceSwitching()
 
+socket.on('user-muted', userId => {
+  videos[userId].muted = true
+})
+
+socket.on('user-unmuted', userId => {
+  videos[userId].muted = false
+})
+
 socket.on('user-disconnected', userId => {
   if (peers[userId]) peers[userId].close()
 })
 
 myPeer.on('open', id => {
+  myid = id
   socket.emit('join-room', ROOM_ID, id)
 })
 
 function connectToNewUser(userId, stream) {
   const call = myPeer.call(userId, stream)
-  const video = document.createElement('video')
+  calls.push(call)
+  call.peerConnection.getSenders()[0].replaceTrack(myAudio)
+  call.peerConnection.getSenders()[0].replaceTrack(myVideo)
+  const video = makeVideoElement(userId)
   call.on('stream', userVideoStream => {
     addVideoStream(video, userVideoStream)
   })
@@ -51,11 +70,11 @@ function connectToNewUser(userId, stream) {
   peers[userId] = call
 }
 
-function addVideoStream(video, stream) {
+function addVideoStream(elem, stream) {
+  video = elem.firstElementChild
   video.srcObject = stream
   video.addEventListener('loadedmetadata', () => {
     video.play()
-<<<<<<< HEAD
     var playing = true
 
     video.onclick = () => {
@@ -68,7 +87,7 @@ function addVideoStream(video, stream) {
       }
     }
   })
-  videoGrid.append(video)
+  videoGrid.append(elem)
 }
 
 function setupDeviceSwitching() {
@@ -80,6 +99,7 @@ function setupDeviceSwitching() {
     navigator.mediaDevices.getUserMedia({
       audio: {deviceId: event.target.value}
     }).then(stream => {
+      myAudio = stream.getAudioTracks()[0]
       for (peer of calls) {
         peer.peerConnection.getSenders()[0].replaceTrack(stream.getAudioTracks()[0])
       }
@@ -91,6 +111,7 @@ function setupDeviceSwitching() {
     navigator.mediaDevices.getUserMedia({
       video: {deviceId: event.target.value}
     }).then(stream => {
+      myVideo = stream.getVideoTracks()[0]
       for (peer of calls) {
         peer.peerConnection.getSenders()[0].replaceTrack(stream.getVideoTracks()[0])
       }
@@ -110,4 +131,48 @@ function setupDeviceSwitching() {
       }
     });
   })
+}
+
+function makeVideoElement(userId) {
+  var elem = document.createElement("div")
+  elem.className = "video-container"
+  var video = document.createElement('video')
+  elem.append(video)
+
+  if (!userId) {
+    video.muted = true
+    var mute = document.createElement('button')
+    mute.textContent = "Mute"
+    mute.className = "mute-button"
+
+    mute.onclick = () => {
+      if (mute.textContent === "Mute") {
+        socket.emit('mute', ROOM_ID, myid)
+        mute.textContent = "Unmute"
+      } else {
+        socket.emit('unmute', ROOM_ID, myid)
+        mute.textContent = "Mute"
+      }
+    }
+    elem.append(mute)
+
+    var deafen = document.createElement('button')
+    deafen.textContent = "Deafen"
+    deafen.className = "deafen-button"
+
+    deafened = false
+    deafen.onclick = () => {
+      deafened = !deafened
+      for (key in videos) {
+        video = videos[key]
+        video.muted = deafened
+      }
+      deafen.textContent = deafened ? "Un-deafen" : "Deafen"
+    }
+    elem.append(deafen)
+  } else {
+    videos[userId] = video
+  }
+
+  return elem
 }

@@ -17,6 +17,30 @@
       grid-template-columns: repeat(auto-fill, 300px);
       grid-auto-rows: 300px;
     }
+
+    .video-container:hover .mute-button {
+      position: absolute;
+      bottom: 5px;
+      left: 5px;
+    }
+
+    .video-container:not(:hover) .mute-button {
+      display: none;
+    }
+
+    .video-container:hover .deafen-button {
+      position: absolute;
+      bottom: 5px;
+      left: 100px;
+    }
+
+    .video-container:not(:hover) .deafen-button {
+      display: none;
+    }
+
+    .video-container {
+      position: relative;
+    }
     
     video {
       width: 100%;
