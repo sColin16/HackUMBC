@@ -6,6 +6,7 @@ const myPeer = new Peer(undefined, {
 myid = null
 const localVideo = makeVideoElement(false)
 var myVideo = null
+var myScreen = null
 var myAudio = null
 localVideo.firstElementChild.muted = true
 var calls = []
@@ -56,27 +57,44 @@ navigator.mediaDevices.getUserMedia({
     peers[peerUserId] = newPeer;
 
     conn.on('data', data => {
-      console.log("Recieved data from peer")
-      conn.send({group: myGroup});
-      console.log("Sent back data in return");
-      peerGroup = data.group;
-      video.firstElementChild.muted = data.muted
+      console.log(data)
+      if (data.hasOwnProperty('group')) {
+        console.log("Recieved data from peer")
+        conn.send({group: myGroup});
+        console.log("Sent back data in return");
+        peerGroup = data.group;
+        video.firstElementChild.muted = data.muted
 
-      myPeer.on('call', call => {
-        newPeer.call = call;
+        myPeer.on('call', call => {
+          newPeer.call = call;
 
-        calls.push(call)
-        call.answer(stream);
-    
-        call.on('stream', userVideoStream => {
-          injectVideoStream(video, userVideoStream);
-          moveVideoStream(video, peerGroup);
-        });
+          calls.push(call)
+          call.answer(stream);
+      
+          call.on('stream', userVideoStream => {
+            injectVideoStream(video, userVideoStream);
+            moveVideoStream(video, peerGroup);
+            call.remoteStream.onremovetrack = (e) => {
+              console.log("******")
+              console.log(e)
+            }
+            call.remoteStream.onaddtrack = (e) => {
+              injectVideoStream(video, new MediaStream([e.track]))
+              console.log("******")
+              console.log(e)
+            }
+          });
 
-        call.on('close', () => {
-          video.remove()
+          call.on('close', () => {
+            video.remove()
+          })
         })
-      })
+      } else {
+        console.log("In the else")
+        var vid = videos[peerUserId]
+        var s = peers[peerUserId].call.peerConnection.getReceivers()
+        console.log(s)
+      }
     });
   });
 
@@ -132,6 +150,10 @@ function connectToNewUser(userId, stream) {
       calls.push(call)
       call.peerConnection.getSenders()[0].replaceTrack(myAudio)
       call.peerConnection.getSenders()[1].replaceTrack(myVideo)
+      call.peerConnection.ontrack = (e) => {
+        console.log("=====")
+        console.log(e)
+      }
       
       // Add the stream object to the video DOM object once sent
       call.on('stream', userVideoStream => {
@@ -263,24 +285,21 @@ function makeVideoElement(userId) {
     share.onclick = () => {
       if (!sharing) {
         navigator.mediaDevices.getDisplayMedia().then(stream => {
-          myVideo = stream.getVideoTracks()[0]
+          myScreen = stream.getVideoTracks()[0]
           injectVideoStream(localVideo, stream)
-          for (peer of calls) {
-            peer.peerConnection.getSenders()[1].replaceTrack(myVideo)
+          for (peerId in peers) {
+            peer = peers[peerId].call
+            peer.peerConnection.addTrack(myScreen)
           }
         })
         share.textContent = "Unshare Screen"
         sharing = true
       } else {
-        navigator.mediaDevices.getUserMedia({
-          video: true
-        }).then(stream => {
-          myVideo = stream.getVideoTracks()[0]
-          injectVideoStream(localVideo, stream)
-          for (peer of calls) {
-            peer.peerConnection.getSenders()[1].replaceTrack(myVideo)
-          }
-        })
+        myScreen = null
+        for (peerId in peers) {
+          peer = peers[peerId].call
+          peer.peerConnection.removeTrack(myScreen)
+        }
         share.textContent = "Share Screen"
         sharing = false
       }
