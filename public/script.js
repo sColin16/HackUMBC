@@ -362,7 +362,7 @@ function setupSelf() {
     myPeer = new Peer(undefined, {
       host: 'bubblz.space',
       secure: true,
-      debug: 1,
+      debug: 3,
       port: '3001'
     })
 
@@ -372,26 +372,6 @@ function setupSelf() {
       myid = id
       socket.emit('join-room', ROOM_ID, id);
 
-      myPeer.on('call', call => {
-        peers[call.peer].call = call;
-
-        calls.push(call);
-        call.answer(stream);
-        const video = makeVideoElement(call.peer)
-        peers[call.peer].videoObj = video;
-        if (peers[call.peer].muted) {
-	  peers[conn.peer].videoObj.firstElementChild.muted = data.muted
-        }
-    
-        call.on('stream', userVideoStream => {
-          injectVideoStream(video, userVideoStream);
-          moveVideoStream(video, 0);
-        });
-
-        call.on('close', () => {
-          video.remove()
-        })
-      })
 
       myPeer.on('connection', conn => {
         console.log("Peer establishing connection")
@@ -423,6 +403,26 @@ function setupSelf() {
         });
       });
     })
+      myPeer.on('call', call => {
+        peers[call.peer].call = call;
+
+        calls.push(call);
+        call.answer(stream);
+        const video = makeVideoElement(call.peer)
+        peers[call.peer].videoObj = video;
+        if (peers[call.peer].muted) {
+	  peers[conn.peer].videoObj.firstElementChild.muted = data.muted
+        }
+    
+        call.on('stream', userVideoStream => {
+          injectVideoStream(video, userVideoStream);
+          moveVideoStream(video, 0);
+        });
+
+        call.on('close', () => {
+          video.remove()
+        })
+      })
 
     socket.on('user-connected', userId => {
       connectToNewUser(userId, stream)
@@ -521,8 +521,8 @@ function moveGroupToMain(group) {
 }
 
 function moveGroupFromMain(group) {
-  for (key in videos) {
-    video = videos[key]
+  for (key in peerVideos) {
+    video = peerVideos[key]
     video.muted = deafened
   }
   let groupWrapper = document.getElementById(`room-${group}`);
