@@ -2,8 +2,18 @@ let isHandlerDragging = false;
 let MIN_WIDTH_MAIN_PANEL = 400;
 let rooms = [];
 let resizer = null;
+let modal = null;
+let currentUser = null;
 //Thanks to https://htmldom.dev/create-resizable-split-views/ for the resizing script
+function setUsername(){
+    currentUser = document.getElementById("username").value;
+    closeModal();
+}
 document.addEventListener('DOMContentLoaded', function() {
+    modal = document.getElementById("myModal");
+
+    launchModal();
+
     let videos = document.getElementsByClassName("videoContainer")
     Array.prototype.forEach.call(videos, videoScreen =>{
         makeElementDraggable(videoScreen);
@@ -191,3 +201,15 @@ function makeElementDraggable(elem) {
     }
 }
 
+//MODAL STUFF
+
+
+// When the user clicks the button, open the modal
+function launchModal(){
+    modal.style.display = "block";
+}
+
+// When the user clicks on <span> (x), close the modal
+function closeModal() {
+    modal.style.display = "none";
+}
