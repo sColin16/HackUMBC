@@ -1,8 +1,5 @@
 const socket = io('/')
-const myPeer = new Peer(undefined, {
-  host: '/',
-  port: '3001'
-})
+var myPeer = null
 myid = null
 const localVideo = makeVideoElement(false)
 var myVideo = null
@@ -193,13 +190,13 @@ function createRoomDOM(roomId){
     }else{
         newRoom.domElement.style.background = "none"
     }
-}
+  }
   rooms.push(newRoom);
   roomContainer.appendChild(newRoom.domElement);
 }
 
 function signalRoomCreated(roomId) {
-  socket.emit('create-room', roomId);
+  socket.emit('create-room', roomId, ROOM_ID, myid);
 }
 
 function inRoom(){
@@ -275,7 +272,7 @@ function makeElementDraggable(elem) {
         moveVideoStream(localVideo, myGroup);
         moveGroupToMain(myGroup);
 
-        socket.emit('move', {userId: myPeer.id, group: myGroup});
+        socket.emit('move', {userId: myPeer.id, group: myGroup}, ROOM_ID, myid);
       } else {
         img.style.borderRadius = 0;
       }
@@ -300,7 +297,7 @@ navigator.mediaDevices.getUserMedia({
   myAudio = stream.getAudioTracks()[0];
   myVideo = stream.getVideoTracks()[0];
 
-  socket.emit('get-rooms', null);
+  socket.emit('get-rooms', ROOM_ID);
 
   socket.on('valid-rooms', rooms => {
     for (let i = 0; i < rooms.length; i++) {
@@ -325,6 +322,15 @@ navigator.mediaDevices.getUserMedia({
     let peerGroup;
     let peerUserId;
 
+    myPeer = new Peer(undefined, {
+      host: '/',
+      port: '3001'
+    })
+    myPeer.on('open', id => {
+      console.log('Joining')
+      myid = id
+      socket.emit('join-room', ROOM_ID, id)
+    })
     myPeer.on('connection', conn => {
       console.log("Peer establishing connection")
       let newPeer = new PeerInfo();
@@ -397,10 +403,6 @@ socket.on('delete-room', roomId => {
   deleteRoomDOM(roomId);
 });
 
-myPeer.on('open', id => {
-  myid = id
-  socket.emit('join-room', ROOM_ID, id)
-})
 
 function connectToNewUser(userId, stream) {
   let newPeer = new PeerInfo();
