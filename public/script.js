@@ -9,7 +9,6 @@ var myVideo = null
 var myAudio = null
 localVideo.firstElementChild.muted = true
 var calls = []
-var videos = {}
 let myGroup = 0
 let muted = false;
 
@@ -371,11 +370,13 @@ navigator.mediaDevices.getUserMedia({
 setupDeviceSwitching()
 
 socket.on('user-muted', userId => {
-  videos[userId].muted = true
+  peerVideos[userId].muted = true
+  peerVideos[userId].setAttribute('hardMute', true)
 })
 
 socket.on('user-unmuted', userId => {
-  videos[userId].muted = false
+  peerVideos[userId].muted = false
+  peerVideos[userId].removeAttribute('hardMute')
 })
 
 socket.on('user-disconnected', userId => {
@@ -449,9 +450,17 @@ function moveGroupToMain(group) {
   mainWrapper.appendChild(videoGroup);
   mainLabel.innerText = `Room ${group}`;
   groupWrapper.style.display="none";
+
+  // for (video of mainWrapper.getElementByTag('video')) {
+  //   video.muted = !video.hasAttribute('hardMute')
+  // }
 }
 
 function moveGroupFromMain(group) {
+  // for (key in videos) {
+  //   video = videos[key]
+  //   video.muted = deafened
+  // }
   let groupWrapper = document.getElementById(`room-${group}`);
   let videoGroup = document.getElementById(`room-${group}-videos`); 
 
@@ -577,8 +586,8 @@ function makeVideoElement(userId) {
       } else {
         deafIcon.textContent = 'volume_up'
       }
-      for (key in videos) {
-        video = videos[key]
+      for (key in peerVideos) {
+        video = peerVideos[key]
         video.muted = deafened
       }
     }
@@ -619,12 +628,8 @@ function makeVideoElement(userId) {
     bottom.append(share)
     elem.append(bottom)
   } else {
-    videos[userId] = video
+    peerVideos[userId] = video
   }
 
   return elem
-}
-
-function shareScreen() {
-  console.log("IN SHARE")
 }

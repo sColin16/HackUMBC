@@ -135,3 +135,44 @@ button:active {
     text-align: center;
     color: black;
 }
+.material-icons {
+    color: #FFFFFF;
+    background-color: #00000000;
+}
+
+.material-icons:hover {
+    color: #88ff88;
+    background-color: #00000000;
+    cursor: pointer;
+}
+
+.video-container * {
+    background-color: #00000000;
+}
+
+.icon-holder {
+    background-color: #00000000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.video-container:hover .bottom {
+    position: absolute;
+    display: flex;
+    justify-content: space-around;
+    bottom: 0px;
+    left: 0px;
+    margin-right: 5px;
+    width: 300px;
+    background: rgb(0,0,0);
+    background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 100%);
+}
+.video-container:not(:hover) .bottom {
+    display: none;
+}
+
+
+.video-container {
+    position: relative;
+}
