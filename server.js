@@ -26,7 +26,11 @@ io.on('connection', socket => {
     socket.to(roomId).broadcast.emit('user-unmuted', userId)
   })
   socket.on('get-rooms', (roomId) => {
-    console.log("Client requesting valid rooms");
+    if (!openRooms[roomId]) {
+      openRooms[roomId] = [0];
+    }
+
+    console.log("Client requesting valid rooms: " + roomId);
     socket.emit('valid-rooms', openRooms[roomId]);
   });
   socket.on('disconnect', (roomId, userId) => {
@@ -43,7 +47,6 @@ io.on('connection', socket => {
     socket.to(roomId).broadcast.emit('move', msg);
   });
 
-
   socket.on('create-room', (msg, roomId, userId) => {
     console.log("Client created new room with id: " + msg);
     openRooms[roomId].push(msg);
@@ -51,11 +54,17 @@ io.on('connection', socket => {
 
     socket.to(roomId).broadcast.emit('create-room', msg)
   });
-  socket.on('join-room', (roomId, userId) => {
-    if (!openRooms[roomId]) {
-      openRooms[roomId] = [0];
-    }
 
+  socket.on('delete-room', (msg, roomId) => {
+    console.log("Client deleted room with id: " + msg);
+    const removalIndex = openRooms[roomId].indexOf(msg);
+    openRooms[roomId].splice(removalIndex, 1);
+    console.log("New valid rooms: " + openRooms[roomId]);
+
+    socket.to(roomId).broadcast.emit('delete-room', msg);
+  })
+
+  socket.on('join-room', (roomId, userId) => {
     socket.join(roomId)
     socket.to(roomId).broadcast.emit('user-connected', userId)
 

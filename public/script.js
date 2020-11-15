@@ -30,9 +30,45 @@ let isHandlerDragging = false;
 let MIN_WIDTH_MAIN_PANEL = 400;
 let rooms = [];
 let resizer = null;
+let modal = null;
+let currentUser = null;
+
+//MODAL STUFF
+
+// When the user clicks the button, open the modal
+function launchModal(){
+  modal.style.display = "block";
+}
+
+// When the user clicks on <span> (x), close the modal
+function closeModal() {
+  modal.style.display = "none";
+}
 
 //Thanks to https://htmldom.dev/create-resizable-split-views/ for the resizing script
+function setUsername(){
+  currentUser = document.getElementById("username").value;
+  closeModal();
+  setupSelf();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    modal = document.getElementById("myModal");
+
+    socket.emit('get-rooms', ROOM_ID);
+  
+    socket.on('valid-rooms', rooms => {
+      for (let i = 0; i < rooms.length; i++) {
+        createRoomDOM(rooms[i]);
+      }
+
+      // Update the next roomId to be one higher than the last
+      // THis works since rooms are always added in sequential order
+      nextRoomId = rooms[rooms.length - 1] + 1;
+
+      launchModal();
+    });
+
     let videos = document.getElementsByClassName("videoContainer")
     Array.prototype.forEach.call(videos, videoScreen =>{
         makeElementDraggable(videoScreen);
@@ -135,16 +171,19 @@ function Room(roomID){
  * across the server, as long as there is not video in that room
  */
 function deleteSelectedRooms(){
-  rooms.forEach(room => {
-      if(room.isSelected){
-          if (room.domElement.getElementsByClassName('roomVideos')[0].childNodes.length > 0) {
-            console.log("Could not delete room: has person in it")
-          } else {
-            rooms.splice(rooms.indexOf(room), 1);
-            deleteRoom(room.id);
-          }
+  for (let i = 0; i < rooms.length; i++) {
+    let room = rooms[i];
+
+    if(room.isSelected){
+      if (room.domElement.getElementsByClassName('roomVideos')[0].childNodes.length > 0) {
+        console.log("Could not delete room: has person in it")
+      } else {
+        rooms.splice(rooms.indexOf(room), 1);
+        i--;
+        deleteRoom(room.id);
       }
-  });
+    }
+  }
 }
 
 function deleteRoom(roomId) {
@@ -157,7 +196,7 @@ function deleteRoomDOM(roomId) {
 }
 
 function signalRoomDeleted(roomId) {
-  socket.emit('delete-room', roomId);
+  socket.emit('delete-room', roomId, ROOM_ID);
 }
 
 /**
@@ -165,6 +204,7 @@ function signalRoomDeleted(roomId) {
  * Used when the "add new room" button is pressed
  */
 function createNewRoom() {
+  console.log(nextRoomId);
   createRoomDOM(nextRoomId);
   signalRoomCreated(nextRoomId);
 
@@ -196,6 +236,7 @@ function createRoomDOM(roomId){
 }
 
 function signalRoomCreated(roomId) {
+  console.log(roomId);
   socket.emit('create-room', roomId, ROOM_ID, myid);
 }
 
@@ -290,23 +331,13 @@ function makeElementDraggable(elem) {
   }
 }
 
-navigator.mediaDevices.getUserMedia({
-  video: true,
-  audio: true
-}).then(stream => {
-  myAudio = stream.getAudioTracks()[0];
-  myVideo = stream.getVideoTracks()[0];
-
-  socket.emit('get-rooms', ROOM_ID);
-
-  socket.on('valid-rooms', rooms => {
-    for (let i = 0; i < rooms.length; i++) {
-      createRoomDOM(rooms[i]);
-    }
-
-    // Update the next roomId to be one higher than the last
-    // THis works since rooms are always added in sequential order
-    nextRoomId = rooms[rooms.length - 1] + 1;
+function setupSelf() {
+  navigator.mediaDevices.getUserMedia({
+    video: true,
+    audio: true
+  }).then(stream => {
+    myAudio = stream.getAudioTracks()[0];
+    myVideo = stream.getVideoTracks()[0];
 
     // Make own video draggable
     makeElementDraggable(localVideo);
@@ -371,7 +402,7 @@ navigator.mediaDevices.getUserMedia({
       connectToNewUser(userId, stream)
     });
   })
-})
+}
 
 setupDeviceSwitching()
 
