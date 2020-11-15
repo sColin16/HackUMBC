@@ -665,9 +665,10 @@ function makeVideoElement(userId) {
   var video = document.createElement('video')
   elem.append(video)
 
+  var bottom = document.createElement('div')
+  bottom.className = "bottom"
+
   if (!userId) {
-    var bottom = document.createElement('div')
-    bottom.className = "bottom"
     video.muted = true
     var mute = document.createElement('div')
     mute.className = "icon-holder"
@@ -747,10 +748,26 @@ function makeVideoElement(userId) {
       }
     }
     bottom.append(share)
-    elem.append(bottom)
+
+
+
   } else {
     peerVideos[userId] = video
   }
+
+  var fullScreen = document.createElement('div')
+  fullScreen.className = "icon-holder"
+  var isFull = false
+  var fullIcon = document.createElement('i')
+  fullIcon.className = 'material-icons'
+  fullIcon.textContent = 'open_in_full'
+  fullScreen.append(fullIcon)
+  fullScreen.onclick = () => {
+    video.requestFullscreen()
+    isFull = true
+  }
+  bottom.append(fullScreen)
+  elem.append(bottom)
 
   return elem
 }
