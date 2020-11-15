@@ -389,46 +389,45 @@ function setupSelf() {
           conn.send({group: myGroup, name: currentUser});
           console.log("Sent back data in return");
           peerGroup = data.group;
+          newPeer.group = peerGroup;
           if (peers[conn.peer].videoObj) {
             moveVideoStream(peers[conn.peer].videoObj, peerGroup);
-	    peers[conn.peer].videoObj.firstElementChild.muted = data.muted
+	          peers[conn.peer].videoObj.firstElementChild.muted = data.muted
           } else {
-	    peers[conn.peer].muted = data.muted
+	          peers[conn.peer].muted = data.muted
           }
 
           peerName = data.name;
   
           newPeer.name = peerName;
-
-  
         });
       });
     });
 
-      myPeer.on('call', call => {
-        peers[call.peer].call = call;
+    myPeer.on('call', call => {
+      peers[call.peer].call = call;
 
-        calls.push(call);
-        call.answer(stream);
-        const video = makeVideoElement(call.peer)
-        peers[call.peer].videoObj = video;
-        if (peers[call.peer].muted) {
-	        peers[conn.peer].videoObj.firstElementChild.muted = data.muted
-        }
+      calls.push(call);
+      call.answer(stream);
+      const video = makeVideoElement(call.peer)
+      peers[call.peer].videoObj = video;
+      if (peers[call.peer].muted) {
+        peers[conn.peer].videoObj.firstElementChild.muted = data.muted
+      }
     
-        call.on('stream', userVideoStream => {
-          console.log(video.querySelector('video').srcObject);
-          if(video.querySelector('video').srcObject === null) {
-            streams.push(userVideoStream);
-            injectVideoStream(video, userVideoStream, 'setupSelf injection');
-            moveVideoStream(video, 0);
-          }
-        });
+      call.on('stream', userVideoStream => {
+        console.log(video.querySelector('video').srcObject);
+        if(video.querySelector('video').srcObject === null) {
+          streams.push(userVideoStream);
+          injectVideoStream(video, userVideoStream, 'setupSelf injection');
+          moveVideoStream(video, peers[call.peer].group);
+        }
+      });
 
-        call.on('close', () => {
-          video.remove()
-        })
+      call.on('close', () => {
+        video.remove()
       })
+    })
 
     socket.on('user-connected', userId => {
       console.log("I am connecting to user " + userId);
@@ -535,7 +534,7 @@ function moveGroupFromMain(group) {
     video = peerVideos[key]
     video.muted = deafened
   }
-  let roupWrapper = document.getElementById(`room-${group}`);
+  let groupWrapper = document.getElementById(`room-${group}`);
   let videoGroup = document.getElementById(`room-${group}-videos`); 
 
   groupWrapper.appendChild(videoGroup);
