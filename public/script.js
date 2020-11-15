@@ -10,6 +10,8 @@ let muted = false;
 
 let nextRoomId = 0;
 
+let streams = [];
+
 /**
  * Stores all the information about a peer, including access to the call object
  */
@@ -346,7 +348,7 @@ function setupSelf() {
     makeElementDraggable(localVideo);
 
     // Add own video stream to video object
-    injectVideoStream(localVideo, stream);
+    injectVideoStream(localVideo, stream, "Initial injection");
 
     // Move video stream to the default room
 
@@ -362,7 +364,7 @@ function setupSelf() {
     myPeer = new Peer(undefined, {
       host: 'bubblz.space',
       secure: true,
-      debug: 3,
+      debug: 0,
       port: '3001'
     })
 
@@ -371,7 +373,6 @@ function setupSelf() {
       console.log(id)
       myid = id
       socket.emit('join-room', ROOM_ID, id);
-
 
       myPeer.on('connection', conn => {
         console.log("Peer establishing connection")
@@ -402,7 +403,8 @@ function setupSelf() {
   
         });
       });
-    })
+    });
+
       myPeer.on('call', call => {
         peers[call.peer].call = call;
 
@@ -411,12 +413,16 @@ function setupSelf() {
         const video = makeVideoElement(call.peer)
         peers[call.peer].videoObj = video;
         if (peers[call.peer].muted) {
-	  peers[conn.peer].videoObj.firstElementChild.muted = data.muted
+	        peers[conn.peer].videoObj.firstElementChild.muted = data.muted
         }
     
         call.on('stream', userVideoStream => {
-          injectVideoStream(video, userVideoStream);
-          moveVideoStream(video, 0);
+          console.log(video.querySelector('video').srcObject);
+          if(video.querySelector('video').srcObject === null) {
+            streams.push(userVideoStream);
+            injectVideoStream(video, userVideoStream, 'setupSelf injection');
+            moveVideoStream(video, 0);
+          }
         });
 
         call.on('close', () => {
@@ -425,6 +431,7 @@ function setupSelf() {
       })
 
     socket.on('user-connected', userId => {
+      console.log("I am connecting to user " + userId);
       connectToNewUser(userId, stream)
     });
   })
@@ -469,39 +476,42 @@ function connectToNewUser(userId, stream) {
 
   newPeer.conn = conn;
 
-  console.log("attempting to connect to peer");
-  console.log(newPeer);
+  console.log("Connecting to new peer");
   let peerGroup;
 
   conn.on("open", () => {
     console.log("Sending group to peer")
     conn.send({group: myGroup, name: currentUser, muted: muted});
+  });
 
-    conn.on('data', data => {
-      console.log("Received group from peer");
-      peerGroup = data.group;
-      peerName = data.name;
+  conn.on('data', data => {
+    console.log("Received group from peer");
+    peerGroup = data.group;
+    peerName = data.name;
 
-      newPeer.name = peerName;
+    newPeer.name = peerName;
 
-      const video = makeVideoElement(userId);
-      newPeer.videoObj = video;
+    const video = makeVideoElement(userId);
+    newPeer.videoObj = video;
 
-      const call = myPeer.call(userId, stream);
-      newPeer.call = call;
-      calls.push(call)
-      call.peerConnection.getSenders()[0].replaceTrack(myAudio)
-      call.peerConnection.getSenders()[1].replaceTrack(myVideo)
-      
-      // Add the stream object to the video DOM object once sent
-      call.on('stream', userVideoStream => {
-        injectVideoStream(video, userVideoStream);
+    console.log("Calling peer: " + userId);
+    const call = myPeer.call(userId, stream);
+    newPeer.call = call;
+    calls.push(call)
+    call.peerConnection.getSenders()[0].replaceTrack(myAudio)
+    call.peerConnection.getSenders()[1].replaceTrack(myVideo)
+    
+    // Add the stream object to the video DOM object once sent
+    call.on('stream', userVideoStream => {
+      console.log(video.querySelector('video').srcObject);
+      if(video.querySelector('video').srcObject === null) {
+        injectVideoStream(video, userVideoStream, "connectNewUser Injection");
         moveVideoStream(video, peerGroup);
-      })
-      call.on('close', () => {
-        video.remove()
-      })
-    });
+      }
+    })
+    call.on('close', () => {
+      video.remove()
+    })
   });
 }
 
@@ -525,7 +535,7 @@ function moveGroupFromMain(group) {
     video = peerVideos[key]
     video.muted = deafened
   }
-  let groupWrapper = document.getElementById(`room-${group}`);
+  let roupWrapper = document.getElementById(`room-${group}`);
   let videoGroup = document.getElementById(`room-${group}-videos`); 
 
   groupWrapper.appendChild(videoGroup);
@@ -539,22 +549,21 @@ function moveVideoStream(video, group) {
 /**
  * Adds a stream to a video DOM object, and returns that object
  */
-function injectVideoStream(elem, stream) {
+function injectVideoStream(elem, stream, special) {
+  console.log('injecting into video stream')
+  console.log(special, elem, stream)
   video = elem.querySelector('video');
   video.srcObject = stream
-  video.addEventListener('loadedmetadata', () => {
-    console.log("Playing")
-    video.play()
-    var playing = true
+  
+  video.play()
+  console.log("Playing")
 
-    video.onclick = () => {
-      if (playing) {
-        video.pause()
-        playing = false
-      } else {
-        video.play()
-        playing = true
-      }
+  video.addEventListener('click', (e) => {
+    let target = e.target;
+    if (!target.paused) {
+      video.pause()
+    } else {
+      target.play()
     }
   })
   return elem;
@@ -683,7 +692,7 @@ function makeVideoElement(userId) {
         shareIcon.textContent = 'screen_share'
         navigator.mediaDevices.getDisplayMedia().then(stream => {
           myVideo = stream.getVideoTracks()[0]
-          injectVideoStream(localVideo, stream)
+          injectVideoStream(localVideo, stream, 'makeVideoA');
           for (peer of calls) {
             peer.peerConnection.getSenders()[1].replaceTrack(myVideo)
           }
@@ -695,7 +704,7 @@ function makeVideoElement(userId) {
           video: true
         }).then(stream => {
           myVideo = stream.getVideoTracks()[0]
-          injectVideoStream(localVideo, stream)
+          injectVideoStream(localVideo, stream, 'makeVideoB');
           for (peer of calls) {
             peer.peerConnection.getSenders()[1].replaceTrack(myVideo)
           }
