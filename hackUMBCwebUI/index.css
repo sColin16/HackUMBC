@@ -24,21 +24,39 @@
     font-size: 30px;
     display: flex;
     flex-flow: column;
+    width: 50vw;
 }
 
 #flexContainer > #breakoutPanel{
     background-color: #f1f1f1;
     margin: 5px;
     padding: 5px;
-    flex: 1 1 0%;
+    flex: 1 1 0;
+
 }
 .panelHeader{
     font-family: OpenSansBold;
     display: inline-block;
     font-size: 30px;
 }
-#breakoutPanel > button{
-    display: inline-block;
+#breakoutPanel > .panelHeader{
+    display: flex;
+    justify-content: space-between;
+}
+button{
+    border-width: 2px;
+    border-radius: 12px;
+    padding: 4px;
+    text-align: center;
+}
+button:hover,
+button:focus {
+    outline: 0;
+    box-shadow: 2px 2px 10px #b0b0b0;
+}
+
+button:active {
+    transform: scale(0.99);
 }
 #roomContainer{
     background-color: #f1f1f1;
@@ -51,13 +69,14 @@
     flex-grow: 1;
 }
 #roomContainer > .room{
-    margin: 0px;
-    padding: 75px;
+    margin: 0;
+    padding: 50px;
     border-radius: 50%;
     border-style: solid;
     border-width: 2px;
     background: none;
     display: flex;
+    transition: width ease 0.5s  ;
 }
 
 #panelDivider {
@@ -75,28 +94,38 @@
     height: auto;
     flex-grow: 1;
 }
+
 .videoContainer {
     background: none;
     max-width: 50%;
     margin-right: 10px;
     margin-bottom: 10px;
 }
+
 #mainVideoContainer > .videoContainer > img{
+    object-fit: cover;
+    border-radius: 0;
     border-style: solid;
     background: none;
-    width: 100%;
-    height: auto;
+    width: auto;
+    height: 200px;
+    border-width: 3px;
+    transition: border-width 0.5s ease ;
 }
 .videoContainer > img:active {
     box-shadow: 10px 10px 30px grey;
-    z-index: 99;
+    width: 60px;
+    height: 60px;
 }
 .room > .videoContainer > img{
+    display:flex;
     background: none;
     object-fit: cover;
     border-radius: 50%;
     width: 60px;
     height: 60px;
+    border-style: solid;
+    border-width: 1px;
 }
 .personNameHeader {
     background: none;
