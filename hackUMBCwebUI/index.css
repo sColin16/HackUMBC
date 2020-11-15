@@ -107,23 +107,31 @@ button:active {
     border-radius: 0;
     border-style: solid;
     background: none;
-    width: auto;
+    width: 200px;
     height: 200px;
     border-width: 3px;
-    transition: border-width 0.5s ease ;
 }
+#mainVideoContainer > .videoContainer > img:active,
 .videoContainer > img:active {
+    transition: height .5s ease-out, width .5s ease;
     box-shadow: 10px 10px 30px grey;
-    width: 60px;
-    height: 60px;
+    width: 100px;
+    height: 100px;
+}
+.room > .videoContainer > img:active,
+.videoContainer > img:active {
+    transition: height .5s ease-out, width .5s ease;
+    box-shadow: 10px 10px 30px grey;
+    width: 200px;
+    height: 200px;
 }
 .room > .videoContainer > img{
     display:flex;
     background: none;
     object-fit: cover;
     border-radius: 50%;
-    width: 60px;
-    height: 60px;
+    width: 100px;
+    height: 100px;
     border-style: solid;
     border-width: 1px;
 }
@@ -183,7 +191,6 @@ button:active {
     margin: 10px;
     outline: 0;
     box-shadow: 2px 2px 10px #b0b0b0;
-
 }
 .modal-content {
     border-radius: 30px;

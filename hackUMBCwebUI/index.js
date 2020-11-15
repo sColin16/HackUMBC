@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     Array.prototype.forEach.call(videos, videoScreen =>{
         makeElementDraggable(videoScreen);
     });
-        // Query the element
+    // Query the element
     resizer = document.getElementById('panelDivider');
     const leftSide = resizer.previousElementSibling;
     const rightSide = resizer.nextElementSibling;
@@ -135,6 +135,9 @@ function inRoom(){
 function getRoomDiv(){
     let out = null
     rooms.forEach(room =>{
+        if(room.domElement.innerHTML.length < 10){
+            room.domElement.style.padding = "100px"
+        }
         if(room.isMousedOver){
             out = room.domElement;
         }
@@ -167,6 +170,7 @@ function makeElementDraggable(elem) {
         e.preventDefault();
         // calculate the new cursor position:
         let topPos = elem.getBoundingClientRect().top
+        let height1= elem.clientHeight;
         let leftPos = elem.getBoundingClientRect().left
         pos1 = initialMouseX - e.clientX;
         pos2 = initialMouseY - e.clientY;
@@ -174,30 +178,43 @@ function makeElementDraggable(elem) {
         initialMouseY = e.clientY;
         // set the element's new position:
         elem.style.position = "absolute"
-        elem.style.top = (topPos - pos2) + "px";
-        elem.style.left =(leftPos - pos1) + "px";
+        elem.style.top = e.clientY - height1/2 + "px";
+        elem.style.left = e.clientX - height1/2+ "px";
         centerX = resizer.getBoundingClientRect().left;
-        img.style.borderRadius = 50-((centerX-e.clientX)/10)+"%";
-        //console.log(oldSize-((centerX-e.clientX)/10));
+        if(firstX < centerX)  {
+            img.style.borderRadius = 50 - ((centerX - e.clientX) / 10) + "%";
+        }
+        if(firstX > centerX)  {
+            console.log( ((centerX - e.clientX) / 10))
+            img.style.borderRadius = 25 - ((centerX - e.clientX) / 10) + "%";
+        }
+        //console.log(oldSize-((centerX-e.clientX)/10 console.log(elem.style.width)));
         img.style.zIndex = 99;
     }
-
     function closeDragElement(e) {
         e = e || window.event;
         e.preventDefault();
-        if(inRoom()){
-            let destination = getRoomDiv()
-            destination.style.padding = "30px";
-            destination.appendChild(elem);
-            img.style.borderRadius = 50 +"%";
-        } else{
-            img.style.borderRadius = 0;
-        }
-        //else go back to before
         elem.style.position = "relative"
         elem.style.top =  0;
         elem.style.left = 0;
         img.style.zIndex = 0;
+        if(inRoom()){
+            let destination = getRoomDiv()
+            destination.style.padding = "60px";
+            destination.appendChild(elem);
+            img.style.borderRadius = 50 +"%";
+
+        } else{
+            if(firstX < centerX) {
+                img.style.borderRadius = 0;
+            } else if(e.clientX < centerX){
+                img.style.borderRadius = 0 +"%";
+                img.style.borderWidth = 2 +"px";
+                elem.attributeStyleMap.clear()
+                document.getElementById("mainVideoContainer").appendChild(elem);
+
+            }
+        }
 
         /* stop moving when mouse button is released:*/
         elem.style.pointerEvents = "auto";
