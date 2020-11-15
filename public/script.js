@@ -131,7 +131,7 @@ function connectToNewUser(userId, stream) {
       newPeer.call = call;
       calls.push(call)
       call.peerConnection.getSenders()[0].replaceTrack(myAudio)
-      call.peerConnection.getSenders()[0].replaceTrack(myVideo)
+      call.peerConnection.getSenders()[1].replaceTrack(myVideo)
       
       // Add the stream object to the video DOM object once sent
       call.on('stream', userVideoStream => {
@@ -256,9 +256,39 @@ function makeVideoElement(userId) {
       deafen.textContent = deafened ? "Un-deafen" : "Deafen"
     }
     elem.append(deafen)
+
+    var share = document.createElement('button')
+    var sharing = false
+    share.textContent = "Share Screen"
+    share.onclick = () => {
+      if (!sharing) {
+        navigator.mediaDevices.getDisplayMedia().then(stream => {
+          myVideo = stream.getVideoTracks()[0]
+          injectVideoStream(localVideo, stream)
+          for (peer of calls) {
+            peer.peerConnection.getSenders()[1].replaceTrack(myVideo)
+          }
+        })
+        share.textContent = "Unshare Screen"
+        sharing = true
+      } else {
+        navigator.mediaDevices.getUserMedia({
+          video: true
+        }).then(stream => {
+          myVideo = stream.getVideoTracks()[0]
+          injectVideoStream(localVideo, stream)
+          for (peer of calls) {
+            peer.peerConnection.getSenders()[1].replaceTrack(myVideo)
+          }
+        })
+        share.textContent = "Share Screen"
+        sharing = false
+      }
+    }
   } else {
     videos[userId] = video
   }
+  elem.append(share)
 
   return elem
 }
@@ -283,3 +313,7 @@ document.getElementById('move-3').addEventListener('click', e => {
 
   socket.emit('move', {userId: myPeer.id, group: myGroup});
 });
+
+function shareScreen() {
+  console.log("IN SHARE")
+}
