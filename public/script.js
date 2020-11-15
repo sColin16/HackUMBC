@@ -148,7 +148,7 @@ function Room(roomID){
       roomHeader.classList.add("roomHeader");
 
       let roomLabel = document.createElement("h2");
-      roomLabel.innerText = `Room ${roomID}`;
+      roomLabel.innerText = `Bubble ${roomID}`;
 
       roomHeader.appendChild(roomLabel);
 
@@ -526,7 +526,7 @@ function moveGroupToMain(group) {
   const videoGroup = document.getElementById(`room-${group}-videos`);
 
   mainWrapper.appendChild(videoGroup);
-  mainLabel.innerText = `Room ${group}`;
+  mainLabel.innerText = `Bubble ${group}`;
   groupWrapper.style.display="none";
 
   for (video of mainWrapper.getElementsByTagName('video')) {
