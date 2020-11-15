@@ -1,8 +1,32 @@
 const express = require('express')
+const fs = require('fs');
+const http = require('http');
+const https = require('https');
 const app = express()
-const server = require('http').Server(app)
+
+
+var server = null
+if (fs.existsSync('/etc/letsencrypt/live/bubblz.space/privkey.pem')) {
+  // Certificate
+  const privateKey = fs.readFileSync('/etc/letsencrypt/live/bubblz.space/privkey.pem', 'utf8');
+  const certificate = fs.readFileSync('/etc/letsencrypt/live/bubblz.space/cert.pem', 'utf8');
+  const ca = fs.readFileSync('/etc/letsencrypt/live/bubblz.space/chain.pem', 'utf8');
+
+  const credentials = {
+    key: privateKey,
+    cert: certificate,
+    ca: ca
+  };
+  server = https.createServer(credentials, app);
+} else {
+  server = http.createServer(app);
+}
+
+
 const io = require('socket.io')(server)
 const { v4: uuidV4 } = require('uuid')
+
+
 
 let openRooms = {}; // Stores arrays of open roomIds in each room 
 
