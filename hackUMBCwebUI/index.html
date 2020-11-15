@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+<script src="index.js"></script>
+    <div id="flexContainer">
+        <div id="mainPanel">
+            <div class="panelHeader">Current Room</div>
+            <div id="mainVideoContainer">
+                <div class="videoContainer">
+                    <div class="personNameHeader">Shane</div>
+                    <img src="assets/SampleProfilePic.png" alt="Person Name">
+                </div>
+                <div class="videoContainer">
+                    <div class="personNameHeader">Colin</div>
+                    <img src="assets/SampleProfilePic1.png" alt="Person Name">
+                </div>
+                <div class="videoContainer">
+                    <div class="personNameHeader">Jackson</div>
+                    <img src="assets/SampleProfilePic2.png" alt="Person Name">
+                </div>
+                <div class="videoContainer">
+                    <div class="personNameHeader">Jeb</div>
+                    <img src="assets/SampleProfilePic3.png" alt="Person Name">
+                </div>
+            </div>
+        </div>
+
+        <div id="panelDivider"></div>
+        <div id="breakoutPanel">
+            <div class="panelHeader">
+                Breakout Rooms
+                <button type="button" onclick="addNewRoom()"> add new room </button>
+            </div>
+            <div id="roomContainer"></div>
+
+        </div>
+    </div>
+</body>
+</html>
