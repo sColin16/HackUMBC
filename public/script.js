@@ -366,6 +366,24 @@ function setupSelf() {
       myid = id
       socket.emit('join-room', ROOM_ID, id);
 
+      myPeer.on('call', call => {
+        peers[call.peer].call = call;
+
+        calls.push(call);
+        call.answer(stream);
+        const video = makeVideoElement(call.peer)
+        newPeer.videoObj = video;
+    
+        call.on('stream', userVideoStream => {
+          injectVideoStream(video, userVideoStream);
+          moveVideoStream(video, 0);
+        });
+
+        call.on('close', () => {
+          video.remove()
+        })
+      })
+
       myPeer.on('connection', conn => {
         console.log("Peer establishing connection")
         let newPeer = new PeerInfo();
@@ -374,37 +392,20 @@ function setupSelf() {
         peerUserId = conn.peer;
   
         peers[peerUserId] = newPeer;
+
   
         conn.on('data', data => {
           console.log("Recieved data from peer")
           conn.send({group: myGroup, name: currentUser});
           console.log("Sent back data in return");
           peerGroup = data.group;
+          moveVideoStream(peers[conn.peer].videoObj, peerGroup);
           peerName = data.name;
   
           newPeer.name = peerName;
 
-          
-          const video = makeVideoElement(conn.peer)
-          newPeer.videoObj = video;
-  
           video.firstElementChild.muted = data.muted
   
-          myPeer.on('call', call => {
-            newPeer.call = call;
-  
-            calls.push(call);
-            call.answer(stream);
-        
-            call.on('stream', userVideoStream => {
-              injectVideoStream(video, userVideoStream);
-              moveVideoStream(video, peerGroup);
-            });
-  
-            call.on('close', () => {
-              video.remove()
-            })
-          })
         });
       });
     })
@@ -500,16 +501,16 @@ function moveGroupToMain(group) {
   mainLabel.innerText = `Room ${group}`;
   groupWrapper.style.display="none";
 
-  // for (video of mainWrapper.getElementByTag('video')) {
-  //   video.muted = !video.hasAttribute('hardMute')
-  // }
+  for (video of mainWrapper.getElementsByTagName('video')) {
+    video.muted = !video.hasAttribute('hardMute')
+  }
 }
 
 function moveGroupFromMain(group) {
-  // for (key in videos) {
-  //   video = videos[key]
-  //   video.muted = deafened
-  // }
+  for (key in videos) {
+    video = videos[key]
+    video.muted = deafened
+  }
   let groupWrapper = document.getElementById(`room-${group}`);
   let videoGroup = document.getElementById(`room-${group}-videos`); 
 
