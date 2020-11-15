@@ -1,10 +1,9 @@
 const socket = io('/')
 var myPeer = null
 myid = null
-const localVideo = makeVideoElement(false)
+let localVideo = null;
 var myVideo = null
 var myAudio = null
-localVideo.firstElementChild.muted = true
 var calls = []
 let myGroup = 0
 let muted = false;
@@ -15,10 +14,11 @@ let nextRoomId = 0;
  * Stores all the information about a peer, including access to the call object
  */
 class PeerInfo {
-  constructor(videoObj, call, conn) {
+  constructor(videoObj, call, conn, name) {
     this.videoObj = videoObj;
     this.call = call;
     this.conn = conn;
+    this.name = name;
   }
 }
 
@@ -332,6 +332,9 @@ function makeElementDraggable(elem) {
 }
 
 function setupSelf() {
+  localVideo = makeVideoElement(false);
+  localVideo.firstElementChild.muted = true
+
   navigator.mediaDevices.getUserMedia({
     video: true,
     audio: true
@@ -357,46 +360,54 @@ function setupSelf() {
       host: '/',
       port: '3001'
     })
+
     myPeer.on('open', id => {
       console.log('Joining')
       myid = id
-      socket.emit('join-room', ROOM_ID, id)
-    })
-    myPeer.on('connection', conn => {
-      console.log("Peer establishing connection")
-      let newPeer = new PeerInfo();
-      const video = makeVideoElement(conn.peer)
+      socket.emit('join-room', ROOM_ID, id);
 
-      newPeer.conn = conn;
-      newPeer.videoObj = video;
-      peerUserId = conn.peer;
+      myPeer.on('connection', conn => {
+        console.log("Peer establishing connection")
+        let newPeer = new PeerInfo();
+  
+        newPeer.conn = conn;
+        peerUserId = conn.peer;
+  
+        peers[peerUserId] = newPeer;
+  
+        conn.on('data', data => {
+          console.log("Recieved data from peer")
+          conn.send({group: myGroup, name: currentUser});
+          console.log("Sent back data in return");
+          peerGroup = data.group;
+          peerName = data.name;
+  
+          newPeer.name = peerName;
 
-      peers[peerUserId] = newPeer;
-
-      conn.on('data', data => {
-        console.log("Recieved data from peer")
-        conn.send({group: myGroup});
-        console.log("Sent back data in return");
-        peerGroup = data.group;
-        video.firstElementChild.muted = data.muted
-
-        myPeer.on('call', call => {
-          newPeer.call = call;
-
-          calls.push(call);
-          call.answer(stream);
-      
-          call.on('stream', userVideoStream => {
-            injectVideoStream(video, userVideoStream);
-            moveVideoStream(video, peerGroup);
-          });
-
-          call.on('close', () => {
-            video.remove()
+          
+          const video = makeVideoElement(conn.peer)
+          newPeer.videoObj = video;
+  
+          video.firstElementChild.muted = data.muted
+  
+          myPeer.on('call', call => {
+            newPeer.call = call;
+  
+            calls.push(call);
+            call.answer(stream);
+        
+            call.on('stream', userVideoStream => {
+              injectVideoStream(video, userVideoStream);
+              moveVideoStream(video, peerGroup);
+            });
+  
+            call.on('close', () => {
+              video.remove()
+            })
           })
-        })
+        });
       });
-    });
+    })
 
     socket.on('user-connected', userId => {
       connectToNewUser(userId, stream)
@@ -434,31 +445,38 @@ socket.on('delete-room', roomId => {
   deleteRoomDOM(roomId);
 });
 
-
 function connectToNewUser(userId, stream) {
   let newPeer = new PeerInfo();
-  const video = makeVideoElement(userId)
+
+  peers[userId] = newPeer;
+
   const conn = myPeer.connect(userId);
 
   newPeer.conn = conn;
-  newPeer.videoObj = video;
 
+  console.log("attempting to connect to peer");
   console.log(newPeer);
   let peerGroup;
 
   conn.on("open", () => {
     console.log("Sending group to peer")
-    conn.send({group: myGroup, muted: muted});
+    conn.send({group: myGroup, name: currentUser, muted: muted});
 
     conn.on('data', data => {
       console.log("Received group from peer");
       peerGroup = data.group;
+      peerName = data.name;
+
+      newPeer.name = peerName;
+
+      const video = makeVideoElement(userId);
+      newPeer.videoObj = video;
 
       const call = myPeer.call(userId, stream);
       newPeer.call = call;
       calls.push(call)
       call.peerConnection.getSenders()[0].replaceTrack(myAudio)
-     call.peerConnection.getSenders()[1].replaceTrack(myVideo)
+      call.peerConnection.getSenders()[1].replaceTrack(myVideo)
       
       // Add the stream object to the video DOM object once sent
       call.on('stream', userVideoStream => {
@@ -468,8 +486,6 @@ function connectToNewUser(userId, stream) {
       call.on('close', () => {
         video.remove()
       })
-    
-      peers[userId] = newPeer;
     });
   });
 }
@@ -509,7 +525,7 @@ function moveVideoStream(video, group) {
  * Adds a stream to a video DOM object, and returns that object
  */
 function injectVideoStream(elem, stream) {
-  video = elem.firstElementChild
+  video = elem.querySelector('video');
   video.srcObject = stream
   video.addEventListener('loadedmetadata', () => {
     video.play()
@@ -574,6 +590,19 @@ function setupDeviceSwitching() {
 function makeVideoElement(userId) {
   var elem = document.createElement("div")
   elem.className = "video-container"
+
+  let nameLabel = document.createElement("p");
+
+  
+  if (userId) {
+    console.log(userId);
+    nameLabel.innerText = peers[userId].name;
+  } else {
+    nameLabel.innerText = currentUser + " (you)"
+  }
+
+  elem.append(nameLabel);
+
   var video = document.createElement('video')
   elem.append(video)
 
