@@ -10,7 +10,7 @@ var myAudio = null
 localVideo.firstElementChild.muted = true
 var calls = []
 var videos = {}
-let myGroup = 2
+let myGroup = 1
 let muted = false
 
 /**
@@ -27,6 +27,116 @@ class PeerInfo {
 const peers = {} // Dictionary of (userID, PeerInfo) pairs
 
 const peerVideos = {}; // Stores video DOM objects, hashed by userID
+
+let isHandlerDragging = false;
+let MIN_WIDTH_MAIN_PANEL = 400;
+let rooms = [];
+//Thanks to https://htmldom.dev/create-resizable-split-views/ for the resizing script
+document.addEventListener('DOMContentLoaded', function() {
+    let videos = document.getElementsByClassName("videoContainer")
+    Array.prototype.forEach.call(videos, videoScreen =>{
+        makeElementDraggable(videoScreen);
+    });
+        // Query the element
+    const resizer = document.getElementById('panelDivider');
+    const leftSide = resizer.previousElementSibling;
+    const rightSide = resizer.nextElementSibling;
+
+    // The current position of mouse
+    let mouseX = 0;
+    let mouseY = 0;
+    let leftWidth = 0;
+
+    // Handle the mousedown event
+    // that's triggered when user drags the resizer
+    const mouseDownHandler = function(e) {
+        // Get the current mouse position
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        leftWidth = leftSide.getBoundingClientRect().width;
+
+        // Attach the listeners to `document`
+        document.addEventListener('mousemove', mouseMoveHandler);
+        document.addEventListener('mouseup', mouseUpHandler);
+    };
+
+    const mouseMoveHandler = function(e) {
+        // How far the mouse has been moved
+        const dx = e.clientX - mouseX;
+        const dy = e.clientY - mouseY;
+
+        const newLeftWidth = (leftWidth + dx) * 100 / resizer.parentNode.getBoundingClientRect().width;
+        leftSide.style.width = `${newLeftWidth}%`;
+
+        resizer.style.cursor = 'col-resize';
+        document.body.style.cursor = 'col-resize';
+
+        leftSide.style.userSelect = 'none';
+        leftSide.style.pointerEvents = 'none';
+
+        rightSide.style.userSelect = 'none';
+        rightSide.style.pointerEvents = 'none';
+    };
+
+    const mouseUpHandler = function() {
+        resizer.style.removeProperty('cursor');
+        document.body.style.removeProperty('cursor');
+
+        leftSide.style.removeProperty('user-select');
+        leftSide.style.removeProperty('pointer-events');
+
+        rightSide.style.removeProperty('user-select');
+        rightSide.style.removeProperty('pointer-events');
+        // Remove the handlers of `mousemove` and `mouseup`
+        document.removeEventListener('mousemove', mouseMoveHandler);
+        document.removeEventListener('mouseup', mouseUpHandler);
+    };
+
+    // Attach the handler
+    resizer.addEventListener('mousedown', mouseDownHandler);
+});
+
+//ROOM OBJECT
+function Room(roomID){
+  this.id = roomID;
+  this.isMousedOver = false;
+  this.makeDomElement = function() {
+      let roomElement = document.createElement("div");
+      roomElement.id=`room-${roomID}`;
+      roomElement.classList.add('room');
+
+      let roomHeader = document.createElement("div");
+      roomHeader.classList.add("roomHeader");
+
+      let roomLabel = document.createElement("h2");
+      roomLabel.innerText = `Room ${roomID}`;
+
+      let videoContainer = document.createElement("div");
+      videoContainer.classList.add("roomVideos");
+      videoContainer.id = `room-{roomID}-videos`;
+
+      roomHeader.appendChild(roomLabel);
+      roomHeader.appendChild(videoContainer);
+
+      this.domElement = roomElement;
+  };
+  this.domElement = null;
+}
+
+function addNewRoom(){
+  let roomContainer = document.getElementById('roomContainer')
+  let newRoom = new Room(rooms.length, null)
+
+  newRoom.makeDomElement();
+  newRoom.domElement.onmouseover = function(){
+      newRoom.isMousedOver = true;
+  }
+  newRoom.domElement.onmouseleave = function(){
+      newRoom.isMousedOver = false;
+  }
+  rooms.push(newRoom);
+  roomContainer.appendChild(newRoom.domElement);
+}
 
 navigator.mediaDevices.getUserMedia({
   video: true,
@@ -150,9 +260,9 @@ function connectToNewUser(userId, stream) {
 }
 
 function moveGroupToMain(group) {
-  const mainWrapper = document.getElementById('main-videos');
+  const mainWrapper = document.getElementById('mainVideoContainer');
   let mainLabel = document.getElementById('main-label');
-  let groupWrapper = document.getElementById(`room-${group}-wrapper`);
+  let groupWrapper = document.getElementById(`room-${group}`);
   const videoGroup = document.getElementById(`room-${group}-videos`);
 
   mainWrapper.appendChild(videoGroup);
@@ -314,6 +424,7 @@ function makeVideoElement(userId) {
   return elem
 }
 
+/*
 document.getElementById('move-1').addEventListener('click', e => {
   moveGroupFromMain(myGroup);
 
@@ -346,6 +457,7 @@ document.getElementById('move-3').addEventListener('click', e => {
 
   socket.emit('move', {userId: myPeer.id, group: myGroup});
 });
+*/
 
 function shareScreen() {
   console.log("IN SHARE")

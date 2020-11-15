@@ -4,13 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
   <script>
     const ROOM_ID = "<%= roomId %>"
   </script>
+
+  <link rel="stylesheet" href="index.css">
+
   <script defer src="https://unpkg.com/peerjs@1.2.0/dist/peerjs.min.js"></script>
   <script src="/socket.io/socket.io.js" defer></script>
   <script src="script.js" defer></script>
-  <title>Document</title>
+
+  <title>Zoomer</title>
+
   <style>
     #video-grid {
       display: grid;
@@ -57,37 +63,34 @@
     <select name="camera" id="camera-select">
     </select>
   </div>
-  <div id='main-grid'>
-    <div>
-      <h1>Main Room</h1>
-      <h2 id='main-label'></h2>
-    </div>
-    <div id='main-videos'></div>
-  </div>
 
-  <div id="rooms-grid"></div>
-    <div id="room-1-wrapper" class="video-grid">
-      <div>
-        <h2>Room 1</h2>
-        <button id='move-1'>Join Room 1</button>
+  <div id='flexContainer'>
+    <div id="mainPanel">
+      <div class="panelHeader">
+        <h1>Current Room</h1>
+        <h2 id='main-label'></h2>
       </div>
-      <div id="room-1-videos"></div>
+
+      <div id="mainVideoContainer"></div>
     </div>
 
-    <div id="room-2-wrapper" class="video-grid">
-      <div>
-        <h2>Room 2</h2>
-        <button id='move-2'>Join Room 2</button>
-      </div>
-      <div id="room-2-videos"></div>
-    </div>
+    <div id="panelDivider"></div>
 
-    <div id="room-3-wrapper" class="video-grid">
-      <div>
-        <h2>Room 3</h2>
-        <button id='move-3'>Join Room 3</button>
+    <div id="breakoutPanel">
+      <div class="panelHeader">
+        Breakout Rooms
+        <button type="button" onclick="addNewRoom()"> add new room </button>
       </div>
-      <div id="room-3-videos"></div>
+
+      <div id="roomContainer">
+        <div class="room" id="room-1">
+          <div class="roomHeader">
+            <h2>Room 1</h2>
+          </div>
+          <div class="roomVideos" id='room-1-videos'></div>
+        </div>
+
+      </div>
     </div>
   </div>
 </body>

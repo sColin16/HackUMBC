@@ -1,0 +1,108 @@
+@font-face {
+    font-family: "OpenSans";
+    src: url("./assets/Fonts/OpenSans-Regular.ttf");
+}
+@font-face {
+    font-family: "OpenSansBold";
+    src: url("./assets/Fonts/OpenSans-Bold.ttf");
+}
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    background-color: #f1f1f1;
+}
+#flexContainer {
+    height: 100vh;
+    display: flex;
+}
+
+#flexContainer > #mainPanel{
+    background-color: #f1f1f1;
+    margin: 5px;
+    padding: 5px;
+    font-size: 30px;
+    display: flex;
+    flex-flow: column;
+}
+
+#flexContainer > #breakoutPanel{
+    background-color: #f1f1f1;
+    margin: 5px;
+    padding: 5px;
+    flex: 1 1 0%;
+}
+.panelHeader{
+    font-family: OpenSansBold;
+    display: inline-block;
+    font-size: 30px;
+}
+#breakoutPanel > button{
+    display: inline-block;
+}
+#roomContainer{
+    background-color: #f1f1f1;
+    display: flex;
+    flex: fit-content;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    height: auto;
+    flex-grow: 1;
+}
+#roomContainer > .room{
+    margin: 0px;
+    padding: 75px;
+    border-radius: 50%;
+    border-style: solid;
+    border-width: 2px;
+    background: none;
+    display: flex;
+}
+
+#panelDivider {
+    background-color: #d7d7d7;
+    cursor: ew-resize;
+    height: 100%;
+    width: 2px;
+}
+
+#mainVideoContainer {
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    flex-wrap: wrap;
+    height: auto;
+    flex-grow: 1;
+}
+.videoContainer {
+    background: none;
+    max-width: 50%;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+#mainVideoContainer > .videoContainer > img{
+    border-style: solid;
+    background: none;
+    width: 100%;
+    height: auto;
+}
+.videoContainer > img:active {
+    box-shadow: 10px 10px 30px grey;
+    z-index: 99;
+}
+.room > .videoContainer > img{
+    background: none;
+    object-fit: cover;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+}
+.personNameHeader {
+    background: none;
+    font-family: "OpenSans";
+    font-size: 16px;
+    padding: 3px;
+    text-align: center;
+    color: black;
+}
