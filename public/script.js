@@ -39,7 +39,9 @@ navigator.mediaDevices.getUserMedia({
   injectVideoStream(localVideo, stream);
 
   // Move video stream to the default room
+
   moveVideoStream(localVideo, myGroup);
+  moveGroupToMain(myGroup);
 
   let peerGroup;
   let peerUserId;
@@ -65,7 +67,7 @@ navigator.mediaDevices.getUserMedia({
       myPeer.on('call', call => {
         newPeer.call = call;
 
-        calls.push(call)
+        calls.push(call);
         call.answer(stream);
     
         call.on('stream', userVideoStream => {
@@ -145,6 +147,25 @@ function connectToNewUser(userId, stream) {
       peers[userId] = newPeer;
     });
   });
+}
+
+function moveGroupToMain(group) {
+  const mainWrapper = document.getElementById('main-videos');
+  let mainLabel = document.getElementById('main-label');
+  let groupWrapper = document.getElementById(`room-${group}-wrapper`);
+  const videoGroup = document.getElementById(`room-${group}-videos`);
+
+  mainWrapper.appendChild(videoGroup);
+  mainLabel.innerText = `Room ${group}`;
+  groupWrapper.style.display="none";
+}
+
+function moveGroupFromMain(group) {
+  let groupWrapper = document.getElementById(`room-${group}-wrapper`);
+  let videoGroup = document.getElementById(`room-${group}-videos`); 
+
+  groupWrapper.appendChild(videoGroup);
+  groupWrapper.style.display="block";
 }
 
 function moveVideoStream(video, group) {
@@ -294,22 +315,34 @@ function makeVideoElement(userId) {
 }
 
 document.getElementById('move-1').addEventListener('click', e => {
-  moveVideoStream(localVideo, 1);
+  moveGroupFromMain(myGroup);
+
   myGroup = 1;
+
+  moveVideoStream(localVideo, myGroup);
+  moveGroupToMain(myGroup);
 
   socket.emit('move', {userId: myPeer.id, group: myGroup});
 });
 
 document.getElementById('move-2').addEventListener('click', e => {
-  moveVideoStream(localVideo, 2);
+  moveGroupFromMain(myGroup);
+
   myGroup = 2;
+
+  moveVideoStream(localVideo, myGroup);
+  moveGroupToMain(myGroup);
 
   socket.emit('move', {userId: myPeer.id, group: myGroup});
 });
 
 document.getElementById('move-3').addEventListener('click', e => {
-  moveVideoStream(localVideo, 3);
+  moveGroupFromMain(myGroup);
+
   myGroup = 3;
+
+  moveVideoStream(localVideo, 3);
+  moveGroupToMain(myGroup);
 
   socket.emit('move', {userId: myPeer.id, group: myGroup});
 });
