@@ -35,11 +35,27 @@
         <div id="breakoutPanel">
             <div class="panelHeader">
                 Breakout Rooms
-                <button type="button" onclick="addNewRoom()"> add new room </button>
+                <button class="button" type="button" onclick="addNewRoom()"> add new room </button>
+                <button class="button" type="button" onclick="deleteRooms()"> delete selected </button>
             </div>
             <div id="roomContainer"></div>
 
         </div>
     </div>
+<!-- The Modal -->
+<div id="myModal" class="modal">
+
+    <!-- Modal content -->
+    <div class="modal-content">
+        <p>Enter a username to join the bvbblzspace  </p>
+        <div>
+            <input type="text" id="username" name="username">
+            <button class="button" type="button" id="submitname" onclick="setUsername()">join the chat</button>
+        </div>
+
+    </div>
+
+</div>
+
 </body>
 </html>
