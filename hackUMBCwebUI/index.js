@@ -1,17 +1,27 @@
 let isHandlerDragging = false;
 let MIN_WIDTH_MAIN_PANEL = 400;
 let rooms = [];
+let resizer = null;
+let modal = null;
+let currentUser = null;
 //Thanks to https://htmldom.dev/create-resizable-split-views/ for the resizing script
+function setUsername(){
+    currentUser = document.getElementById("username").value;
+    closeModal();
+}
 document.addEventListener('DOMContentLoaded', function() {
+    modal = document.getElementById("myModal");
+
+    launchModal();
+
     let videos = document.getElementsByClassName("videoContainer")
     Array.prototype.forEach.call(videos, videoScreen =>{
         makeElementDraggable(videoScreen);
     });
         // Query the element
-    const resizer = document.getElementById('panelDivider');
+    resizer = document.getElementById('panelDivider');
     const leftSide = resizer.previousElementSibling;
     const rightSide = resizer.nextElementSibling;
-
     // The current position of mouse
     let mouseX = 0;
     let mouseY = 0;
@@ -65,7 +75,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Attach the handler
     resizer.addEventListener('mousedown', mouseDownHandler);
 });
-
+function deleteRooms(){
+    rooms.forEach(room =>{
+        if(room.isSelected){
+            room.domElement.remove();
+        }
+    });
+}
 function addNewRoom(){
     let roomContainer = document.getElementById('roomContainer')
     let newRoom = new Room(rooms.length, null)
@@ -77,6 +93,15 @@ function addNewRoom(){
     newRoom.domElement.onmouseleave = function(){
         newRoom.isMousedOver = false;
     }
+    newRoom.domElement.onmousedown = function(){
+        if(!isHandlerDragging)
+            newRoom.isSelected = !newRoom.isSelected;
+        if(newRoom.isSelected){
+            newRoom.domElement.style.background = "rgb(176,196,222)"
+        }else{
+            newRoom.domElement.style.background = "none"
+        }
+    }
     rooms.push(newRoom);
     roomContainer.appendChild(newRoom.domElement);
 }
@@ -84,6 +109,7 @@ function addNewRoom(){
 function Room(roomID){
     this.id = roomID;
     this.isMousedOver = false;
+    this.isSelected = false;
     this.makeDomElement = function() {
         let roomElement = document.createElement("div");
         roomElement.classList.add('room');
@@ -112,15 +138,20 @@ function getRoomDiv(){
 }
 
 function makeElementDraggable(elem) {
-    let pos1 = 0, pos2 = 0, initialMouseX = 0, initialMouseY = 0;
+    let pos1 = 0, pos2 = 0, initialMouseX = 0, initialMouseY = 0, firstX = 0, firstY = 0;
+    let img = elem.querySelector("img")
+    let oldSize = 200;
     elem.onmousedown = dragMouseDown;
     function dragMouseDown(e) {
+        isHandlerDragging =true;
         elem.style.pointerEvents = "none";
         e = e || window.event;
         e.preventDefault();
         // get the mouse cursor position at startup:
         initialMouseX = e.clientX;
         initialMouseY = e.clientY;
+        firstX = initialMouseX;
+        firstY = initialMouseY;
         document.onmouseup = closeDragElement;
         // call a function whenever the cursor moves:
         document.onmousemove = elementDrag;
@@ -140,6 +171,10 @@ function makeElementDraggable(elem) {
         elem.style.position = "absolute"
         elem.style.top = (topPos - pos2) + "px";
         elem.style.left =(leftPos - pos1) + "px";
+        centerX = resizer.getBoundingClientRect().left;
+        img.style.borderRadius = 50-((centerX-e.clientX)/10)+"%";
+        //console.log(oldSize-((centerX-e.clientX)/10));
+        img.style.zIndex = 99;
     }
 
     function closeDragElement(e) {
@@ -148,16 +183,33 @@ function makeElementDraggable(elem) {
         if(inRoom()){
             let destination = getRoomDiv()
             destination.appendChild(elem);
+            img.style.borderRadius = 50 +"%";
+        } else{
+            img.style.borderRadius = 0;
         }
         //else go back to before
         elem.style.position = "relative"
         elem.style.top =  0;
         elem.style.left = 0;
+        img.style.zIndex = 0;
 
         /* stop moving when mouse button is released:*/
         elem.style.pointerEvents = "auto";
         document.onmouseup = null;
         document.onmousemove = null;
+        isHandlerDragging = false;
     }
 }
 
+//MODAL STUFF
+
+
+// When the user clicks the button, open the modal
+function launchModal(){
+    modal.style.display = "block";
+}
+
+// When the user clicks on <span> (x), close the modal
+function closeModal() {
+    modal.style.display = "none";
+}

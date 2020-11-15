@@ -482,44 +482,64 @@ function makeVideoElement(userId) {
   elem.append(video)
 
   if (!userId) {
+    var bottom = document.createElement('div')
+    bottom.className = "bottom"
     video.muted = true
-    var mute = document.createElement('button')
-    mute.textContent = "Mute"
+    var mute = document.createElement('div')
+    mute.className = "icon-holder"
+    var mutIcon = document.createElement('i')
+    mutIcon.className = 'material-icons'
+    mutIcon.textContent = 'mic'
+    mute.append(mutIcon)
+
     mute.className = "mute-button"
 
     mute.onclick = () => {
       if (!muted) {
+        mutIcon.textContent = 'mic_off'
         socket.emit('mute', ROOM_ID, myid)
-        mute.textContent = "Unmute"
         muted = true
       } else {
+        mutIcon.textContent = 'mic'
         socket.emit('unmute', ROOM_ID, myid)
-        mute.textContent = "Mute"
         muted = false
       }
     }
-    elem.append(mute)
+    bottom.append(mute)
 
-    var deafen = document.createElement('button')
-    deafen.textContent = "Deafen"
+    var deafen = document.createElement('div')
+    deafen.className = "icon-holder"
     deafen.className = "deafen-button"
+    var deafIcon = document.createElement('i')
+    deafIcon.className = 'material-icons'
+    deafIcon.textContent = 'volume_up'
+    deafen.append(deafIcon)
 
     deafened = false
     deafen.onclick = () => {
       deafened = !deafened
+      if (deafened) {
+        deafIcon.textContent = 'volume_off'
+      } else {
+        deafIcon.textContent = 'volume_up'
+      }
       for (key in videos) {
         video = videos[key]
         video.muted = deafened
       }
-      deafen.textContent = deafened ? "Un-deafen" : "Deafen"
     }
-    elem.append(deafen)
+    bottom.append(deafen)
 
-    var share = document.createElement('button')
+    var share = document.createElement('div')
+    share.className = "icon-holder"
     var sharing = false
-    share.textContent = "Share Screen"
+    var shareIcon = document.createElement('i')
+    shareIcon.className = 'material-icons'
+    shareIcon.textContent = 'stop_screen_share'
+    share.append(shareIcon)
     share.onclick = () => {
       if (!sharing) {
+        shareIcon.textContent = 'screen_share'
         navigator.mediaDevices.getDisplayMedia().then(stream => {
           myVideo = stream.getVideoTracks()[0]
           injectVideoStream(localVideo, stream)
@@ -527,9 +547,9 @@ function makeVideoElement(userId) {
             peer.peerConnection.getSenders()[1].replaceTrack(myVideo)
           }
         })
-        share.textContent = "Unshare Screen"
         sharing = true
       } else {
+        shareIcon.textContent = 'stop_screen_share'
         navigator.mediaDevices.getUserMedia({
           video: true
         }).then(stream => {
@@ -539,14 +559,14 @@ function makeVideoElement(userId) {
             peer.peerConnection.getSenders()[1].replaceTrack(myVideo)
           }
         })
-        share.textContent = "Share Screen"
         sharing = false
       }
     }
+    bottom.append(share)
+    elem.append(bottom)
   } else {
     videos[userId] = video
   }
-  elem.append(share)
 
   return elem
 }

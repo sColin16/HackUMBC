@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
@@ -24,25 +26,38 @@
       grid-auto-rows: 300px;
     }
 
-    .video-container:hover .mute-button {
-      position: absolute;
-      bottom: 5px;
-      left: 5px;
+    .material-icons {
+      color: #FFFFFF;
+    }
+    
+    .material-icons:hover {
+      color: #88ff88;
     }
 
-    .video-container:not(:hover) .mute-button {
+    .icon-holder {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    div:hover > i {
+      cursor: pointer;
+    }
+
+    .video-container:hover .bottom {
+      position: absolute;
+      display: flex;
+      justify-content: space-around;
+      bottom: 0px;
+      left: 0px;
+      margin-right: 5px;
+      width: 300px;
+      background: rgb(0,0,0);
+      background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 100%);
+    }
+    .video-container:not(:hover) .bottom {
       display: none;
     }
 
-    .video-container:hover .deafen-button {
-      position: absolute;
-      bottom: 5px;
-      left: 100px;
-    }
-
-    .video-container:not(:hover) .deafen-button {
-      display: none;
-    }
 
     .video-container {
       position: relative;

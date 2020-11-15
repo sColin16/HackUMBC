@@ -24,21 +24,39 @@
     font-size: 30px;
     display: flex;
     flex-flow: column;
+    width: 50vw;
 }
 
 #flexContainer > #breakoutPanel{
     background-color: #f1f1f1;
     margin: 5px;
     padding: 5px;
-    flex: 1 1 0%;
+    flex: 1 1 0;
+
 }
 .panelHeader{
     font-family: OpenSansBold;
     display: inline-block;
     font-size: 30px;
 }
-#breakoutPanel > button{
-    display: inline-block;
+#breakoutPanel > .panelHeader{
+    display: flex;
+    justify-content: space-between;
+}
+button{
+    border-width: 2px;
+    border-radius: 12px;
+    padding: 4px;
+    text-align: center;
+}
+button:hover,
+button:focus {
+    outline: 0;
+    box-shadow: 2px 2px 10px #b0b0b0;
+}
+
+button:active {
+    transform: scale(0.99);
 }
 #roomContainer{
     background-color: #f1f1f1;
@@ -51,13 +69,14 @@
     flex-grow: 1;
 }
 #roomContainer > .room{
-    margin: 0px;
-    padding: 75px;
+    margin: 0;
+    padding: 50px;
     border-radius: 50%;
     border-style: solid;
     border-width: 2px;
     background: none;
     display: flex;
+    transition: width ease 0.5s  ;
 }
 
 #panelDivider {
@@ -75,28 +94,38 @@
     height: auto;
     flex-grow: 1;
 }
+
 .videoContainer {
     background: none;
     max-width: 50%;
     margin-right: 10px;
     margin-bottom: 10px;
 }
+
 #mainVideoContainer > .videoContainer > img{
+    object-fit: cover;
+    border-radius: 0;
     border-style: solid;
     background: none;
-    width: 100%;
-    height: auto;
+    width: auto;
+    height: 200px;
+    border-width: 3px;
+    transition: border-width 0.5s ease ;
 }
 .videoContainer > img:active {
     box-shadow: 10px 10px 30px grey;
-    z-index: 99;
+    width: 60px;
+    height: 60px;
 }
 .room > .videoContainer > img{
+    display:flex;
     background: none;
     object-fit: cover;
     border-radius: 50%;
     width: 60px;
     height: 60px;
+    border-style: solid;
+    border-width: 1px;
 }
 .personNameHeader {
     background: none;
@@ -105,4 +134,65 @@
     padding: 3px;
     text-align: center;
     color: black;
+}
+
+
+/*MODAL STUFF*/
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 20%; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+
+    display: flex;
+}
+
+/* Modal Content */
+.modal-content > p {
+    font-size: 20px;
+    text-align:center;
+    font-family: OpenSans;
+    padding-bottom: 30px;
+    background-color: white;
+}
+.modal-content > div {
+    align-items: center;
+    background-color: white;
+}
+.modal-content > div > input {
+    height: 26px;
+    margin: 10px;
+    width: 120px;
+    transition: width 1s;
+    text-align: center;
+    font-family: OpenSans;
+}
+.modal-content > div > input:focus,
+.modal-content > div > input:hover {
+    height: 26px;
+    width: 150px;
+    margin: 10px;
+    outline: 0;
+    box-shadow: 2px 2px 10px #b0b0b0;
+
+}
+.modal-content {
+    border-radius: 30px;
+    background-color: white;
+    margin: auto;
+    padding: 10px;
+    border: 1px solid #888;
+    width: 50%;
+    height: 40%;
+    display: flex;
+    flex-direction:column;
+    align-items: center;
+    justify-content: center;
 }
