@@ -72,7 +72,6 @@ function addNewRoom(){
 
     newRoom.makeDomElement();
     newRoom.domElement.onmouseover = function(){
-        console.log("mouse is over");
         newRoom.isMousedOver = true;
     }
     newRoom.domElement.onmouseleave = function(){
@@ -82,9 +81,8 @@ function addNewRoom(){
     roomContainer.appendChild(newRoom.domElement);
 }
 //ROOM OBJECT
-function Room(roomID, peopleList){
+function Room(roomID){
     this.id = roomID;
-    this.peopleList = peopleList;
     this.isMousedOver = false;
     this.makeDomElement = function() {
         let roomElement = document.createElement("div");
@@ -97,9 +95,7 @@ function Room(roomID, peopleList){
 function inRoom(){
     let out = false;
     rooms.forEach(room =>{
-        console.log(room);
         if(room.isMousedOver){
-            console.log("in the room kinda")
             out = true;
         }
     });
@@ -109,7 +105,6 @@ function getRoomDiv(){
     let out = null
     rooms.forEach(room =>{
         if(room.isMousedOver){
-            console.log(room.isMousedOver);
             out = room.domElement;
         }
     });
@@ -151,7 +146,6 @@ function makeElementDraggable(elem) {
         e = e || window.event;
         e.preventDefault();
         if(inRoom()){
-            console.log("IN ROOM!")
             let destination = getRoomDiv()
             destination.appendChild(elem);
         }

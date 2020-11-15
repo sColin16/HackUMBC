@@ -2,10 +2,15 @@
     font-family: "OpenSans";
     src: url("./assets/Fonts/OpenSans-Regular.ttf");
 }
+@font-face {
+    font-family: "OpenSansBold";
+    src: url("./assets/Fonts/OpenSans-Bold.ttf");
+}
 * {
     padding: 0;
     margin: 0;
     box-sizing: border-box;
+    background-color: #f1f1f1;
 }
 #flexContainer {
     height: 100vh;
@@ -28,6 +33,7 @@
     flex: 1 1 0%;
 }
 .panelHeader{
+    font-family: OpenSansBold;
     display: inline-block;
     font-size: 30px;
 }
@@ -46,18 +52,19 @@
 }
 #roomContainer > .room{
     margin: 0px;
-    padding: 100px;
+    padding: 75px;
     border-radius: 50%;
     border-style: solid;
-    border-width: 2;
-    background: aquamarine;
+    border-width: 2px;
+    background: none;
+    display: flex;
 }
 
 #panelDivider {
-    background-color: #989898;
+    background-color: #d7d7d7;
     cursor: ew-resize;
     height: 100%;
-    width: 4px;
+    width: 2px;
 }
 
 #mainVideoContainer {
@@ -69,22 +76,33 @@
     flex-grow: 1;
 }
 .videoContainer {
+    background: none;
     max-width: 50%;
     margin-right: 10px;
     margin-bottom: 10px;
 }
-.videoContainer > img{
+#mainVideoContainer > .videoContainer > img{
+    border-style: solid;
+    background: none;
     width: 100%;
     height: auto;
 }
+.videoContainer > img:active {
+    box-shadow: 10px 10px 30px grey;
+    z-index: 99;
+}
+.room > .videoContainer > img{
+    background: none;
+    object-fit: cover;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+}
 .personNameHeader {
+    background: none;
     font-family: "OpenSans";
     font-size: 16px;
     padding: 3px;
-    border-style: solid;
-    border-radius: 4px;
-    border-width: 1px;
-    border-color: black;
-
+    text-align: center;
     color: black;
 }
