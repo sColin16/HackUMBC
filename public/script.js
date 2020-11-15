@@ -264,8 +264,9 @@ function getRoomDiv(){
 function makeElementDraggable(elem) {
   let pos1 = 0, pos2 = 0, initialMouseX = 0, initialMouseY = 0, firstX = 0, firstY = 0;
   let img = elem.querySelector("video")
+  let handle = elem.querySelector("p")
   let oldSize = 200;
-  elem.onmousedown = dragMouseDown;
+  handle.onmousedown = dragMouseDown;
   function dragMouseDown(e) {
     isHandlerDragging = true;
       elem.style.pointerEvents = "none";
@@ -276,6 +277,9 @@ function makeElementDraggable(elem) {
       initialMouseY = e.clientY;
       firstX = initialMouseX;
       firstY = initialMouseY;
+      elem.style.position = "absolute"
+      elem.style.top = firstY + "px";
+      elem.style.left = firstX + "px";
       document.onmouseup = closeDragElement;
       // call a function whenever the cursor moves:
       document.onmousemove = elementDrag;
@@ -335,7 +339,7 @@ function makeElementDraggable(elem) {
 
 function setupSelf() {
   localVideo = makeVideoElement(false);
-  localVideo.firstElementChild.muted = true
+  localVideo.querySelector("video").muted = true;
 
   navigator.mediaDevices.getUserMedia({
     video: true,

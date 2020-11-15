@@ -119,7 +119,7 @@ button:active {
     background: none;
 }
 
-#mainVideoContainer video:active {
+#mainVideoContainer p:active ~ video {
     box-shadow: 10px 10px 30px grey;
     width: 60px;
     height: 60px;
@@ -137,12 +137,12 @@ button:active {
     border-width: 1px;
 }
 .personNameHeader {
-    background: none;
+    background-color: #555555;
     font-family: "OpenSans";
     font-size: 16px;
     padding: 3px;
     text-align: center;
-    color: black;
+    color: white;
 }
 .material-icons {
     color: #FFFFFF;
@@ -155,7 +155,10 @@ button:active {
     cursor: pointer;
 }
 
-.video-container * {
+.video-container div {
+    background-color: #00000000;
+}
+.video-container i {
     background-color: #00000000;
 }
 
