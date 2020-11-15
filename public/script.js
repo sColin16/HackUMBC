@@ -234,7 +234,7 @@ function createRoomDOM(roomId){
     }
   }
   rooms.push(newRoom);
-  roomContainer.appendChild(newRoom.domElement);
+  roomContainer.append(newRoom.domElement);
 }
 
 function signalRoomCreated(roomId) {
@@ -616,7 +616,7 @@ function makeVideoElement(userId) {
   elem.className = "video-container"
 
   let nameLabel = document.createElement("p");
-
+  nameLabel.classList.add("personNameHeader");
   
   if (userId) {
     console.log(userId);
