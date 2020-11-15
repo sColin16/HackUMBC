@@ -411,6 +411,7 @@ function setupSelf() {
       call.answer(stream);
       const video = makeVideoElement(call.peer)
       peers[call.peer].videoObj = video;
+      // POSSIBLE
       if (peers[call.peer].muted) {
         peers[conn.peer].videoObj.firstElementChild.muted = data.muted
       }
@@ -527,6 +528,13 @@ function moveGroupToMain(group) {
   for (video of mainWrapper.getElementsByTagName('video')) {
     video.muted = !video.hasAttribute('hardMute')
   }
+
+  for (let i = 0; i < videoGroup.childNodes.length; i++) {
+    let video = videoGroup.childNodes[i].querySelector('video');
+    if (video != localVideo) {
+      videoGroup.childNodes[i].querySelector('video').muted = false;
+    }
+  }
 }
 
 function moveGroupFromMain(group) {
@@ -537,11 +545,22 @@ function moveGroupFromMain(group) {
   let groupWrapper = document.getElementById(`room-${group}`);
   let videoGroup = document.getElementById(`room-${group}-videos`); 
 
+  for (let i = 0; i < videoGroup.childNodes.length; i++) {
+    videoGroup.childNodes[i].querySelector('video').muted = true;
+  }
+
   groupWrapper.appendChild(videoGroup);
   groupWrapper.style.display="block";
 }
 
 function moveVideoStream(video, group) {
+  console.log(group, myGroup);
+  if (group != myGroup) {
+    video.querySelector('video').muted = true;
+  } else {
+    video.querySelector('video').muted = false;
+  }
+
   document.getElementById(`room-${group}-videos`).appendChild(video);
 }
 
