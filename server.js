@@ -4,6 +4,8 @@ const server = require('http').Server(app)
 const io = require('socket.io')(server)
 const { v4: uuidV4 } = require('uuid')
 
+let openRooms = {}; // Stores arrays of open roomIds in each room 
+
 app.set('view engine', 'ejs')
 app.use(express.static('public'))
 
@@ -24,6 +26,10 @@ io.on('connection', socket => {
     socket.to(roomId).broadcast.emit('user-unmuted', userId)
   })
   socket.on('join-room', (roomId, userId) => {
+    if (!openRooms[roomId]) {
+      openRooms[roomId] = [0];
+    }
+
     socket.join(roomId)
     socket.to(roomId).broadcast.emit('user-connected', userId)
 
@@ -39,7 +45,20 @@ io.on('connection', socket => {
       console.log(`User with id ${msg.userId} requesting move to ${msg.group}`);
 
       socket.to(roomId).broadcast.emit('move', msg);
-    })
+    });
+
+    socket.on('get-rooms', () => {
+      console.log("Client requesting valid rooms");
+      socket.emit('valid-rooms', openRooms[roomId]);
+    });
+
+    socket.on('create-room', msg => {
+      console.log("Client created new room with id: " + msg);
+      openRooms[roomId].push(msg);
+      console.log("New valid rooms: " + openRooms[roomId]);
+
+      socket.to(roomId).broadcast.emit('create-room', msg)
+    });
   });
 });
 

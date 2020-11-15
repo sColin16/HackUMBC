@@ -10,8 +10,10 @@ var myAudio = null
 localVideo.firstElementChild.muted = true
 var calls = []
 var videos = {}
-let myGroup = 1
-let muted = false
+let myGroup = 0
+let muted = false;
+
+let nextRoomId = 0;
 
 /**
  * Stores all the information about a peer, including access to the call object
@@ -31,6 +33,7 @@ const peerVideos = {}; // Stores video DOM objects, hashed by userID
 let isHandlerDragging = false;
 let MIN_WIDTH_MAIN_PANEL = 400;
 let rooms = [];
+
 //Thanks to https://htmldom.dev/create-resizable-split-views/ for the resizing script
 document.addEventListener('DOMContentLoaded', function() {
     let videos = document.getElementsByClassName("videoContainer")
@@ -128,9 +131,20 @@ function Room(roomID){
   this.domElement = null;
 }
 
-function addNewRoom(){
+/**
+ * Both creates a new room DOM object AND signals a new room has been created
+ * Used when the "add new room" button is pressed
+ */
+function createNewRoom() {
+  createRoomDOM(nextRoomId);
+  signalRoomCreated(nextRoomId);
+
+  nextRoomId++;
+}
+
+function createRoomDOM(roomId){
   let roomContainer = document.getElementById('roomContainer')
-  let newRoom = new Room(rooms.length, null)
+  let newRoom = new Room(roomId, null)
 
   newRoom.makeDomElement();
   newRoom.domElement.onmouseover = function(){
@@ -141,6 +155,10 @@ function addNewRoom(){
   }
   rooms.push(newRoom);
   roomContainer.appendChild(newRoom.domElement);
+}
+
+function signalRoomCreated(roomId) {
+  socket.emit('create-room', roomId);
 }
 
 function inRoom(){
@@ -233,6 +251,17 @@ navigator.mediaDevices.getUserMedia({
   myAudio = stream.getAudioTracks()[0];
   myVideo = stream.getVideoTracks()[0];
 
+  socket.emit('get-rooms', null);
+
+  socket.on('valid-rooms', rooms => {
+    for (let i = 0; i < rooms.length; i++) {
+      createRoomDOM(rooms[i]);
+    }
+
+    // Update the next roomId to be one higher than the last
+    // THis works since rooms are always added in sequential order
+    nextRoomId = rooms[rooms.length - 1] + 1;
+
   // Make own video draggable
   makeElementDraggable(localVideo);
 
@@ -286,6 +315,7 @@ navigator.mediaDevices.getUserMedia({
   socket.on('user-connected', userId => {
     connectToNewUser(userId, stream)
   });
+  })
 })
 
 setupDeviceSwitching()
@@ -305,6 +335,12 @@ socket.on('user-disconnected', userId => {
 socket.on('move', msg => {
   moveVideoStream(peers[msg.userId].videoObj, msg.group);
 });
+
+socket.on('create-room', roomId => {
+  createRoomDOM(roomId);
+
+  nextRoomId++;
+})
 
 myPeer.on('open', id => {
   myid = id
@@ -334,7 +370,7 @@ function connectToNewUser(userId, stream) {
       newPeer.call = call;
       calls.push(call)
       call.peerConnection.getSenders()[0].replaceTrack(myAudio)
-      call.peerConnection.getSenders()[1].replaceTrack(myVideo)
+     call.peerConnection.getSenders()[1].replaceTrack(myVideo)
       
       // Add the stream object to the video DOM object once sent
       call.on('stream', userVideoStream => {
