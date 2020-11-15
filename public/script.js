@@ -340,6 +340,7 @@ function makeElementDraggable(elem) {
 function setupSelf() {
   localVideo = makeVideoElement(false);
   localVideo.querySelector("video").muted = true;
+  localVideo.querySelector("video").setAttribute('isLocal', true)
 
   navigator.mediaDevices.getUserMedia({
     video: true,
@@ -396,9 +397,9 @@ function setupSelf() {
           newPeer.group = peerGroup;
           if (peers[conn.peer].videoObj) {
             moveVideoStream(peers[conn.peer].videoObj, peerGroup);
-	          peers[conn.peer].videoObj.firstElementChild.muted = data.muted
+            peers[conn.peer].videoObj.querySelector("video").muted = data.muted || deafened
           } else {
-	          peers[conn.peer].muted = data.muted
+            peers[conn.peer].muted = data.muted
           }
 
           peerName = data.name;
@@ -417,7 +418,8 @@ function setupSelf() {
       peers[call.peer].videoObj = video;
       // POSSIBLE
       if (peers[call.peer].muted) {
-        peers[conn.peer].videoObj.firstElementChild.muted = data.muted
+        peers[call.peer].videoObj.querySelector("video").muted = true
+        peers[call.peer].videoObj.querySelector("video").setAttribute('hardmute', true)
       }
     
       call.on('stream', userVideoStream => {
@@ -444,13 +446,16 @@ function setupSelf() {
 setupDeviceSwitching()
 
 socket.on('user-muted', userId => {
+  console.log("Muting")
   peerVideos[userId].muted = true
-  peerVideos[userId].setAttribute('hardMute', true)
+  peerVideos[userId].setAttribute('hardmute', true)
 })
 
 socket.on('user-unmuted', userId => {
-  peerVideos[userId].muted = false
-  peerVideos[userId].removeAttribute('hardMute')
+  console.log("unmuting")
+  peerVideos[userId].muted = peerVideos[userId].getAttribute('notingroup') == "true" || deafened
+  console.log(peerVideos[userId].muted)
+  peerVideos[userId].setAttribute('hardmute', false)
 })
 
 socket.on('user-disconnected', userId => {
@@ -520,6 +525,7 @@ function connectToNewUser(userId, stream) {
 }
 
 function moveGroupToMain(group) {
+  console.log("Maybe muting!")
   const mainWrapper = document.getElementById('mainVideoContainer');
   let mainLabel = document.getElementById('main-label');
   let groupWrapper = document.getElementById(`room-${group}`);
@@ -530,21 +536,24 @@ function moveGroupToMain(group) {
   groupWrapper.style.display="none";
 
   for (video of mainWrapper.getElementsByTagName('video')) {
-    video.muted = !video.hasAttribute('hardMute')
   }
 
   for (let i = 0; i < videoGroup.childNodes.length; i++) {
     let video = videoGroup.childNodes[i].querySelector('video');
     if (video != localVideo) {
-      videoGroup.childNodes[i].querySelector('video').muted = false;
+      const vid = videoGroup.childNodes[i].querySelector('video')
+      vid.muted = vid.getAttribute('hardmute') == 'true' || vid.getAttribute('isLocal') == 'true' || deafened
+      vid.setAttribute('notingroup', false)
     }
   }
 }
 
 function moveGroupFromMain(group) {
+  console.log("Maybe muting!")
   for (key in peerVideos) {
     video = peerVideos[key]
-    video.muted = deafened
+    video.muted = true
+    video.setAttribute('notingroup', true)
   }
   let groupWrapper = document.getElementById(`room-${group}`);
   let videoGroup = document.getElementById(`room-${group}-videos`); 
@@ -561,8 +570,11 @@ function moveVideoStream(video, group) {
   console.log(group, myGroup);
   if (group != myGroup) {
     video.querySelector('video').muted = true;
+    video.querySelector('video').setAttribute('notingroup', true)
   } else {
-    video.querySelector('video').muted = false;
+    var vid = video.querySelector('video')
+    vid.muted = vid.getAttribute('hardmute') == 'true' || vid.getAttribute('isLocal') == 'true' || deafened
+    vid.setAttribute('notingroup', false)
   }
 
   document.getElementById(`room-${group}-videos`).appendChild(video);
@@ -653,9 +665,10 @@ function makeVideoElement(userId) {
   var video = document.createElement('video')
   elem.append(video)
 
+  var bottom = document.createElement('div')
+  bottom.className = "bottom"
+
   if (!userId) {
-    var bottom = document.createElement('div')
-    bottom.className = "bottom"
     video.muted = true
     var mute = document.createElement('div')
     mute.className = "icon-holder"
@@ -697,7 +710,7 @@ function makeVideoElement(userId) {
       }
       for (key in peerVideos) {
         video = peerVideos[key]
-        video.muted = deafened
+        video.muted = deafened || video.getAttribute('hardmute') == 'true' || video.getAttribute('notingroup') == 'true'
       }
     }
     bottom.append(deafen)
@@ -735,10 +748,26 @@ function makeVideoElement(userId) {
       }
     }
     bottom.append(share)
-    elem.append(bottom)
+
+
+
   } else {
     peerVideos[userId] = video
   }
+
+  var fullScreen = document.createElement('div')
+  fullScreen.className = "icon-holder"
+  var isFull = false
+  var fullIcon = document.createElement('i')
+  fullIcon.className = 'material-icons'
+  fullIcon.textContent = 'open_in_full'
+  fullScreen.append(fullIcon)
+  fullScreen.onclick = () => {
+    video.requestFullscreen()
+    isFull = true
+  }
+  bottom.append(fullScreen)
+  elem.append(bottom)
 
   return elem
 }
