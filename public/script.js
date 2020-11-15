@@ -111,15 +111,20 @@ function Room(roomID){
       let roomLabel = document.createElement("h2");
       roomLabel.innerText = `Room ${roomID}`;
 
+      roomHeader.appendChild(roomLabel);
+
+      roomElement.append(roomHeader);
+
       let videoContainer = document.createElement("div");
       videoContainer.classList.add("roomVideos");
-      videoContainer.id = `room-{roomID}-videos`;
+      videoContainer.id = `room-${roomID}-videos`;
 
-      roomHeader.appendChild(roomLabel);
-      roomHeader.appendChild(videoContainer);
+      roomElement.appendChild(videoContainer);
+      roomElement.roomObj = this;
 
       this.domElement = roomElement;
   };
+
   this.domElement = null;
 }
 
@@ -138,12 +143,98 @@ function addNewRoom(){
   roomContainer.appendChild(newRoom.domElement);
 }
 
+function inRoom(){
+  let out = false;
+  rooms.forEach(room =>{
+      if(room.isMousedOver){
+          out = true;
+      }
+  });
+  return out;
+}
+function getRoomDiv(){
+  let out = null
+  rooms.forEach(room =>{
+      if(room.isMousedOver){
+          out = room.domElement;
+      }
+  });
+  return out;
+}
+
+function makeElementDraggable(elem) {
+  let pos1 = 0, pos2 = 0, initialMouseX = 0, initialMouseY = 0;
+  elem.onmousedown = dragMouseDown;
+  function dragMouseDown(e) {
+      elem.style.pointerEvents = "none";
+      e = e || window.event;
+      e.preventDefault();
+      // get the mouse cursor position at startup:
+      initialMouseX = e.clientX;
+      initialMouseY = e.clientY;
+      document.onmouseup = closeDragElement;
+      // call a function whenever the cursor moves:
+      document.onmousemove = elementDrag;
+  }
+
+  function elementDrag(e) {
+      e = e || window.event;
+      e.preventDefault();
+      // calculate the new cursor position:
+      let topPos = elem.getBoundingClientRect().top
+      let leftPos = elem.getBoundingClientRect().left
+      pos1 = initialMouseX - e.clientX;
+      pos2 = initialMouseY - e.clientY;
+      initialMouseX = e.clientX;
+      initialMouseY = e.clientY;
+      // set the element's new position:
+      elem.style.position = "absolute"
+      elem.style.top = (topPos - pos2) + "px";
+      elem.style.left =(leftPos - pos1) + "px";
+  }
+
+  function closeDragElement(e) {
+      e = e || window.event;
+      e.preventDefault();
+      if(inRoom()){
+        moveGroupFromMain(myGroup);
+
+        let destination = getRoomDiv();
+
+        myGroup = destination.roomObj.id; 
+
+        moveVideoStream(localVideo, myGroup);
+        moveGroupToMain(myGroup);
+
+        socket.emit('move', {userId: myPeer.id, group: myGroup});
+
+        /*
+          let destination = getRoomDiv()
+          destination.appendChild(elem);
+          */
+
+      }
+      //else go back to before
+      elem.style.position = "relative"
+      elem.style.top =  0;
+      elem.style.left = 0;
+
+      /* stop moving when mouse button is released:*/
+      elem.style.pointerEvents = "auto";
+      document.onmouseup = null;
+      document.onmousemove = null;
+  }
+}
+
 navigator.mediaDevices.getUserMedia({
   video: true,
   audio: true
 }).then(stream => {
-  myAudio = stream.getAudioTracks()[0]
-  myVideo = stream.getVideoTracks()[0]
+  myAudio = stream.getAudioTracks()[0];
+  myVideo = stream.getVideoTracks()[0];
+
+  // Make own video draggable
+  makeElementDraggable(localVideo);
 
   // Add own video stream to video object
   injectVideoStream(localVideo, stream);
@@ -271,7 +362,7 @@ function moveGroupToMain(group) {
 }
 
 function moveGroupFromMain(group) {
-  let groupWrapper = document.getElementById(`room-${group}-wrapper`);
+  let groupWrapper = document.getElementById(`room-${group}`);
   let videoGroup = document.getElementById(`room-${group}-videos`); 
 
   groupWrapper.appendChild(videoGroup);
