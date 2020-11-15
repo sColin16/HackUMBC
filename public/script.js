@@ -356,13 +356,19 @@ function setupSelf() {
     let peerGroup;
     let peerUserId;
 
+    console.log("About to Call new Peer()")
+    // myPeer = new Peer(undefined, {})
+    console.log("Called new Peer()")
     myPeer = new Peer(undefined, {
-      host: '/',
+      host: 'bubblz.space',
+      secure: true,
+      debug: 1,
       port: '3001'
     })
 
     myPeer.on('open', id => {
       console.log('Joining')
+      console.log(id)
       myid = id
       socket.emit('join-room', ROOM_ID, id);
 
@@ -372,7 +378,10 @@ function setupSelf() {
         calls.push(call);
         call.answer(stream);
         const video = makeVideoElement(call.peer)
-        newPeer.videoObj = video;
+        peers[call.peer].videoObj = video;
+        if (peers[call.peer].muted) {
+	  peers[conn.peer].videoObj.firstElementChild.muted = data.muted
+        }
     
         call.on('stream', userVideoStream => {
           injectVideoStream(video, userVideoStream);
@@ -399,12 +408,17 @@ function setupSelf() {
           conn.send({group: myGroup, name: currentUser});
           console.log("Sent back data in return");
           peerGroup = data.group;
-          moveVideoStream(peers[conn.peer].videoObj, peerGroup);
+          if (peers[conn.peer].videoObj) {
+            moveVideoStream(peers[conn.peer].videoObj, peerGroup);
+	    peers[conn.peer].videoObj.firstElementChild.muted = data.muted
+          } else {
+	    peers[conn.peer].muted = data.muted
+          }
+
           peerName = data.name;
   
           newPeer.name = peerName;
 
-          video.firstElementChild.muted = data.muted
   
         });
       });
@@ -529,6 +543,7 @@ function injectVideoStream(elem, stream) {
   video = elem.querySelector('video');
   video.srcObject = stream
   video.addEventListener('loadedmetadata', () => {
+    console.log("Playing")
     video.play()
     var playing = true
 

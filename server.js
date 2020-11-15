@@ -73,6 +73,9 @@ io.on('connection', socket => {
 
   socket.on('create-room', (msg, roomId, userId) => {
     console.log("Client created new room with id: " + msg);
+    if (!openRooms[roomId]) {
+      openRooms[roomId] = [0];
+    }
     openRooms[roomId].push(msg);
     console.log("New valid rooms: " + openRooms[roomId]);
 
