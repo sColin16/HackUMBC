@@ -33,6 +33,7 @@ const peerVideos = {}; // Stores video DOM objects, hashed by userID
 let isHandlerDragging = false;
 let MIN_WIDTH_MAIN_PANEL = 400;
 let rooms = [];
+let resizer = null;
 
 //Thanks to https://htmldom.dev/create-resizable-split-views/ for the resizing script
 document.addEventListener('DOMContentLoaded', function() {
@@ -40,8 +41,8 @@ document.addEventListener('DOMContentLoaded', function() {
     Array.prototype.forEach.call(videos, videoScreen =>{
         makeElementDraggable(videoScreen);
     });
-        // Query the element
-    const resizer = document.getElementById('panelDivider');
+    // Query the element
+    resizer = document.getElementById('panelDivider');
     const leftSide = resizer.previousElementSibling;
     const rightSide = resizer.nextElementSibling;
 
@@ -103,6 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function Room(roomID){
   this.id = roomID;
   this.isMousedOver = false;
+  this.isSelected = false;
   this.makeDomElement = function() {
       let roomElement = document.createElement("div");
       roomElement.id=`room-${roomID}`;
@@ -132,6 +134,37 @@ function Room(roomID){
 }
 
 /**
+ * Called by the "delete selected" button.
+ * Deletes the DOM object and signals for the deletion of the room
+ * across the server, as long as there is not video in that room
+ */
+function deleteSelectedRooms(){
+  rooms.forEach(room => {
+      if(room.isSelected){
+          if (room.domElement.getElementsByClassName('roomVideos')[0].childNodes.length > 0) {
+            console.log("Could not delete room: has person in it")
+          } else {
+            rooms.splice(rooms.indexOf(room), 1);
+            deleteRoom(room.id);
+          }
+      }
+  });
+}
+
+function deleteRoom(roomId) {
+  deleteRoomDOM(roomId);
+  signalRoomDeleted(roomId);
+}
+
+function deleteRoomDOM(roomId) {
+  document.getElementById(`room-${roomId}`).remove();
+}
+
+function signalRoomDeleted(roomId) {
+  socket.emit('delete-room', roomId);
+}
+
+/**
  * Both creates a new room DOM object AND signals a new room has been created
  * Used when the "add new room" button is pressed
  */
@@ -153,6 +186,15 @@ function createRoomDOM(roomId){
   newRoom.domElement.onmouseleave = function(){
       newRoom.isMousedOver = false;
   }
+  newRoom.domElement.onmousedown = function(){
+    if(!isHandlerDragging)
+        newRoom.isSelected = !newRoom.isSelected;
+    if(newRoom.isSelected){
+        newRoom.domElement.style.background = "rgb(176,196,222)"
+    }else{
+        newRoom.domElement.style.background = "none"
+    }
+}
   rooms.push(newRoom);
   roomContainer.appendChild(newRoom.domElement);
 }
@@ -181,15 +223,20 @@ function getRoomDiv(){
 }
 
 function makeElementDraggable(elem) {
-  let pos1 = 0, pos2 = 0, initialMouseX = 0, initialMouseY = 0;
+  let pos1 = 0, pos2 = 0, initialMouseX = 0, initialMouseY = 0, firstX = 0, firstY = 0;
+  let img = elem.querySelector("video")
+  let oldSize = 200;
   elem.onmousedown = dragMouseDown;
   function dragMouseDown(e) {
+    isHandlerDragging = true;
       elem.style.pointerEvents = "none";
       e = e || window.event;
       e.preventDefault();
       // get the mouse cursor position at startup:
       initialMouseX = e.clientX;
       initialMouseY = e.clientY;
+      firstX = initialMouseX;
+      firstY = initialMouseY;
       document.onmouseup = closeDragElement;
       // call a function whenever the cursor moves:
       document.onmousemove = elementDrag;
@@ -209,6 +256,9 @@ function makeElementDraggable(elem) {
       elem.style.position = "absolute"
       elem.style.top = (topPos - pos2) + "px";
       elem.style.left =(leftPos - pos1) + "px";
+      centerX = resizer.getBoundingClientRect().left;
+      img.style.borderRadius = 50-((centerX-e.clientX)/10)+"%";
+      img.style.zIndex = 99;
   }
 
   function closeDragElement(e) {
@@ -216,6 +266,8 @@ function makeElementDraggable(elem) {
       e.preventDefault();
       if(inRoom()){
         moveGroupFromMain(myGroup);
+
+        img.style.borderRadius = 50 +"%";
 
         let destination = getRoomDiv();
 
@@ -225,22 +277,20 @@ function makeElementDraggable(elem) {
         moveGroupToMain(myGroup);
 
         socket.emit('move', {userId: myPeer.id, group: myGroup});
-
-        /*
-          let destination = getRoomDiv()
-          destination.appendChild(elem);
-          */
-
+      } else {
+        img.style.borderRadius = 0;
       }
       //else go back to before
       elem.style.position = "relative"
       elem.style.top =  0;
       elem.style.left = 0;
+      img.style.zIndex = 0;
 
       /* stop moving when mouse button is released:*/
       elem.style.pointerEvents = "auto";
       document.onmouseup = null;
       document.onmousemove = null;
+      isHandlerDragging = false;
   }
 }
 
@@ -262,59 +312,59 @@ navigator.mediaDevices.getUserMedia({
     // THis works since rooms are always added in sequential order
     nextRoomId = rooms[rooms.length - 1] + 1;
 
-  // Make own video draggable
-  makeElementDraggable(localVideo);
+    // Make own video draggable
+    makeElementDraggable(localVideo);
 
-  // Add own video stream to video object
-  injectVideoStream(localVideo, stream);
+    // Add own video stream to video object
+    injectVideoStream(localVideo, stream);
 
-  // Move video stream to the default room
+    // Move video stream to the default room
 
-  moveVideoStream(localVideo, myGroup);
-  moveGroupToMain(myGroup);
+    moveVideoStream(localVideo, myGroup);
+    moveGroupToMain(myGroup);
 
-  let peerGroup;
-  let peerUserId;
+    let peerGroup;
+    let peerUserId;
 
-  myPeer.on('connection', conn => {
-    console.log("Peer establishing connection")
-    let newPeer = new PeerInfo();
-    const video = makeVideoElement(conn.peer)
+    myPeer.on('connection', conn => {
+      console.log("Peer establishing connection")
+      let newPeer = new PeerInfo();
+      const video = makeVideoElement(conn.peer)
 
-    newPeer.conn = conn;
-    newPeer.videoObj = video;
-    peerUserId = conn.peer;
+      newPeer.conn = conn;
+      newPeer.videoObj = video;
+      peerUserId = conn.peer;
 
-    peers[peerUserId] = newPeer;
+      peers[peerUserId] = newPeer;
 
-    conn.on('data', data => {
-      console.log("Recieved data from peer")
-      conn.send({group: myGroup});
-      console.log("Sent back data in return");
-      peerGroup = data.group;
-      video.firstElementChild.muted = data.muted
+      conn.on('data', data => {
+        console.log("Recieved data from peer")
+        conn.send({group: myGroup});
+        console.log("Sent back data in return");
+        peerGroup = data.group;
+        video.firstElementChild.muted = data.muted
 
-      myPeer.on('call', call => {
-        newPeer.call = call;
+        myPeer.on('call', call => {
+          newPeer.call = call;
 
-        calls.push(call);
-        call.answer(stream);
-    
-        call.on('stream', userVideoStream => {
-          injectVideoStream(video, userVideoStream);
-          moveVideoStream(video, peerGroup);
-        });
+          calls.push(call);
+          call.answer(stream);
+      
+          call.on('stream', userVideoStream => {
+            injectVideoStream(video, userVideoStream);
+            moveVideoStream(video, peerGroup);
+          });
 
-        call.on('close', () => {
-          video.remove()
+          call.on('close', () => {
+            video.remove()
+          })
         })
-      })
+      });
     });
-  });
 
-  socket.on('user-connected', userId => {
-    connectToNewUser(userId, stream)
-  });
+    socket.on('user-connected', userId => {
+      connectToNewUser(userId, stream)
+    });
   })
 })
 
@@ -340,7 +390,11 @@ socket.on('create-room', roomId => {
   createRoomDOM(roomId);
 
   nextRoomId++;
-})
+});
+
+socket.on('delete-room', roomId => {
+  deleteRoomDOM(roomId);
+});
 
 myPeer.on('open', id => {
   myid = id
@@ -550,41 +604,6 @@ function makeVideoElement(userId) {
 
   return elem
 }
-
-/*
-document.getElementById('move-1').addEventListener('click', e => {
-  moveGroupFromMain(myGroup);
-
-  myGroup = 1;
-
-  moveVideoStream(localVideo, myGroup);
-  moveGroupToMain(myGroup);
-
-  socket.emit('move', {userId: myPeer.id, group: myGroup});
-});
-
-document.getElementById('move-2').addEventListener('click', e => {
-  moveGroupFromMain(myGroup);
-
-  myGroup = 2;
-
-  moveVideoStream(localVideo, myGroup);
-  moveGroupToMain(myGroup);
-
-  socket.emit('move', {userId: myPeer.id, group: myGroup});
-});
-
-document.getElementById('move-3').addEventListener('click', e => {
-  moveGroupFromMain(myGroup);
-
-  myGroup = 3;
-
-  moveVideoStream(localVideo, 3);
-  moveGroupToMain(myGroup);
-
-  socket.emit('move', {userId: myPeer.id, group: myGroup});
-});
-*/
 
 function shareScreen() {
   console.log("IN SHARE")

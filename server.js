@@ -59,6 +59,15 @@ io.on('connection', socket => {
 
       socket.to(roomId).broadcast.emit('create-room', msg)
     });
+
+    socket.on('delete-room', msg => {
+      console.log("Client deleted room with id: " + msg);
+      const removalIndex = openRooms[roomId].indexOf(msg);
+      openRooms[roomId].splice(removalIndex, 1);
+      console.log("New valid rooms: " + openRooms[roomId]);
+
+      socket.to(roomId).broadcast.emit('delete-room', msg);
+    })
   });
 });
 
