@@ -7,12 +7,12 @@ let currentUser = null;
 //Thanks to https://htmldom.dev/create-resizable-split-views/ for the resizing script
 function setUsername(){
     currentUser = document.getElementById("username").value;
-    closeModal();
+    closeUsernamePopup();
 }
 document.addEventListener('DOMContentLoaded', function() {
     modal = document.getElementById("myModal");
 
-    launchModal();
+    launchUsernamePopup();
 
     let videos = document.getElementsByClassName("videoContainer")
     Array.prototype.forEach.call(videos, videoScreen =>{
@@ -75,10 +75,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Attach the handler
     resizer.addEventListener('mousedown', mouseDownHandler);
 });
+
 function deleteRooms(){
     rooms.forEach(room =>{
         if(room.isSelected){
-            room.domElement.remove();
+            if(room.domElement.innerHTML.length > 10){
+                alert("this room still has people in it!\nso we can't delete it")
+            }else {
+                room.domElement.remove();
+            }
         }
     });
 }
@@ -182,6 +187,7 @@ function makeElementDraggable(elem) {
         e.preventDefault();
         if(inRoom()){
             let destination = getRoomDiv()
+            destination.style.padding = "30px";
             destination.appendChild(elem);
             img.style.borderRadius = 50 +"%";
         } else{
@@ -202,14 +208,12 @@ function makeElementDraggable(elem) {
 }
 
 //MODAL STUFF
-
-
 // When the user clicks the button, open the modal
-function launchModal(){
-    modal.style.display = "block";
+function launchUsernamePopup(){
+    modal.style.display = "flex";
 }
 
 // When the user clicks on <span> (x), close the modal
-function closeModal() {
+function closeUsernamePopup() {
     modal.style.display = "none";
 }
